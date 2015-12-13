@@ -15,6 +15,8 @@ package com.facebook.presto.rakam;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.internal.StaticCredentialsProvider;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 import io.airlift.configuration.Config;
 
 public class S3BackupConfig
@@ -23,6 +25,7 @@ public class S3BackupConfig
     private String secretAccessKey;
     private String s3Bucket;
     private String s3Directory;
+    private String region;
 
     @Config("aws.access-key")
     public S3BackupConfig setAccessKey(String accessKey)
@@ -35,6 +38,23 @@ public class S3BackupConfig
     public S3BackupConfig setS3Bucket(String s3Bucket)
     {
         this.s3Bucket = s3Bucket;
+        return this;
+    }
+
+    public String getRegion()
+    {
+        return region;
+    }
+
+    public Region getAWSRegion()
+    {
+        return Region.getRegion(region == null ? Regions.DEFAULT_REGION : Regions.fromName(region));
+    }
+
+    @Config("aws.region")
+    public S3BackupConfig setRegion(String region)
+    {
+        this.region = region;
         return this;
     }
 

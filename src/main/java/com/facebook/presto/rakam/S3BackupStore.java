@@ -35,6 +35,7 @@ public class S3BackupStore implements BackupStore
         this.config = config;
         this.s3Directory = CharMatcher.is('/').trimFrom(config.getS3Directory()) + "/";
         s3Client = new AmazonS3Client(config.getCredentials());
+        s3Client.setRegion(config.getAWSRegion());
     }
 
     @Override
