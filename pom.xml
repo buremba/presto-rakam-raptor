@@ -69,7 +69,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-core</artifactId>
-            <version>1.10.40</version>
+            <version>1.10.20</version>
             <exclusions>
                 <exclusion>
                     <groupId>joda-time</groupId>
@@ -95,7 +95,7 @@
         </dependency><dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.10.40</version>
+            <version>1.10.20</version>
             <exclusions>
                 <exclusion>
                     <groupId>joda-time</groupId>

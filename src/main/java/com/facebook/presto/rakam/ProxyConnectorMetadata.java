@@ -19,6 +19,7 @@ import com.facebook.presto.metadata.SessionPropertyManager;
 import com.facebook.presto.metadata.TableHandle;
 import com.facebook.presto.raptor.RaptorInsertTableHandle;
 import com.facebook.presto.raptor.RaptorTableHandle;
+import com.facebook.presto.raptor.metadata.MetadataDao;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorInsertTableHandle;
@@ -35,8 +36,10 @@ import com.facebook.presto.spi.Constraint;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.security.Identity;
+import com.google.common.base.Throwables;
 import io.airlift.slice.Slice;
 
+import java.lang.reflect.Field;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
@@ -59,11 +62,20 @@ class ProxyConnectorMetadata implements ConnectorMetadata
             .setIdentity(new Identity("presto", Optional.<Principal>empty()))
             .setSchema("default")
             .build();
+    private final MetadataDao dao;
 
     public ProxyConnectorMetadata(MetadataManager metadataManager, ConnectorMetadata metadata)
     {
         this.metadata = metadata;
         this.metadataManager = metadataManager;
+        try {
+            Field dao = metadata.getClass().getDeclaredField("dao");
+            dao.setAccessible(true);
+            this.dao = (MetadataDao) dao.get(metadata);
+        }
+        catch (IllegalAccessException | NoSuchFieldException e) {
+            throw Throwables.propagate(e);
+        }
     }
 
     @Override
@@ -196,7 +208,9 @@ class ProxyConnectorMetadata implements ConnectorMetadata
         metadata.commitInsert(session, insertHandle, fragments);
 
         RaptorInsertTableHandle tableHandle = checkType(insertHandle, RaptorInsertTableHandle.class, "tableHandle is invalid");
-        RaptorTableHandle hiveTableHandle = new RaptorTableHandle(tableHandle.getConnectorId(), null, null, 0, null);
+        SchemaTableName table = dao.getTableColumns(tableHandle.getTableId()).get(0).getTable();
+
+        RaptorTableHandle hiveTableHandle = new RaptorTableHandle(tableHandle.getConnectorId(), table.getSchemaName(), table.getTableName(), tableHandle.getTableId(), Optional.empty());
         metadataManager.commitDelete(SESSION, new TableHandle("middleware", hiveTableHandle), fragments);
     }
 
@@ -206,9 +220,10 @@ class ProxyConnectorMetadata implements ConnectorMetadata
         metadata.rollbackInsert(session, insertHandle);
 
         RaptorInsertTableHandle tableHandle = checkType(insertHandle, RaptorInsertTableHandle.class, "tableHandle is invalid");
+        SchemaTableName table = dao.getTableColumns(tableHandle.getTableId()).get(0).getTable();
 
-        RaptorTableHandle rakamTableHandle = new RaptorTableHandle(tableHandle.getConnectorId(), null, null, 0, null);
-        metadataManager.rollbackDelete(SESSION, new TableHandle("middleware", rakamTableHandle));
+        RaptorTableHandle hiveTableHandle = new RaptorTableHandle(tableHandle.getConnectorId(), table.getSchemaName(), table.getTableName(), tableHandle.getTableId(), Optional.empty());
+        metadataManager.rollbackDelete(SESSION, new TableHandle("middleware", hiveTableHandle));
     }
 
     @Override
