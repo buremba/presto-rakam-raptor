@@ -24,7 +24,6 @@ public class S3BackupConfig
     private String accessKey;
     private String secretAccessKey;
     private String s3Bucket;
-    private String s3Directory;
     private String region;
 
     @Config("aws.access-key")
@@ -61,17 +60,6 @@ public class S3BackupConfig
     public String getS3Bucket()
     {
         return s3Bucket;
-    }
-    @Config("aws.s3-bucket.directory")
-    public S3BackupConfig setS3Directory(String s3Directory)
-    {
-        this.s3Directory = s3Directory;
-        return this;
-    }
-
-    public String getS3Directory()
-    {
-        return s3Directory;
     }
 
     public String getAccessKey()

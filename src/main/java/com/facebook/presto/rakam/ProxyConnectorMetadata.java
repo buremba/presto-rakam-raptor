@@ -197,11 +197,7 @@ class ProxyConnectorMetadata implements ConnectorMetadata
     {
         ConnectorInsertTableHandle connectorInsertTableHandle = metadata.beginInsert(session, tableHandle);
 
-        try {
-            metadataManager.beginDelete(SESSION, new TableHandle("middleware", tableHandle));
-        }
-        catch (Exception e) {
-        }
+        metadataManager.beginDelete(SESSION, new TableHandle("middleware", tableHandle));
 
         return connectorInsertTableHandle;
     }
@@ -215,11 +211,7 @@ class ProxyConnectorMetadata implements ConnectorMetadata
         SchemaTableName table = dao.getTableColumns(tableHandle.getTableId()).get(0).getTable();
 
         RaptorTableHandle hiveTableHandle = new RaptorTableHandle(tableHandle.getConnectorId(), table.getSchemaName(), table.getTableName(), tableHandle.getTableId(), Optional.empty());
-        try {
-            metadataManager.commitDelete(SESSION, new TableHandle("middleware", hiveTableHandle), fragments);
-        }
-        catch (Exception e) {
-        }
+        metadataManager.commitDelete(SESSION, new TableHandle("middleware", hiveTableHandle), fragments);
     }
 
     @Override
@@ -231,11 +223,7 @@ class ProxyConnectorMetadata implements ConnectorMetadata
         SchemaTableName table = dao.getTableColumns(tableHandle.getTableId()).get(0).getTable();
 
         RaptorTableHandle hiveTableHandle = new RaptorTableHandle(tableHandle.getConnectorId(), table.getSchemaName(), table.getTableName(), tableHandle.getTableId(), Optional.empty());
-        try {
-            metadataManager.rollbackDelete(SESSION, new TableHandle("middleware", hiveTableHandle));
-        }
-        catch (Exception e) {
-        }
+        metadataManager.rollbackDelete(SESSION, new TableHandle("middleware", hiveTableHandle));
     }
 
     @Override

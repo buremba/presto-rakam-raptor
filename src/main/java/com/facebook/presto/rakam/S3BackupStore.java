@@ -17,7 +17,6 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.transfer.TransferManager;
 import com.facebook.presto.raptor.backup.BackupStore;
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Throwables;
 import org.apache.http.HttpStatus;
 
@@ -27,13 +26,11 @@ public class S3BackupStore implements BackupStore
 {
     private final AmazonS3Client s3Client;
     private final S3BackupConfig config;
-    private final String s3Directory;
 
     @Inject
     public S3BackupStore(S3BackupConfig config)
     {
         this.config = config;
-        this.s3Directory = CharMatcher.is('/').trimFrom(config.getS3Directory()) + "/";
         s3Client = new AmazonS3Client(config.getCredentials());
         s3Client.setRegion(config.getAWSRegion());
     }
@@ -41,14 +38,14 @@ public class S3BackupStore implements BackupStore
     @Override
     public void backupShard(java.util.UUID uuid, java.io.File source)
     {
-        s3Client.putObject(config.getS3Bucket(), s3Directory + uuid.toString(), source);
+        s3Client.putObject(config.getS3Bucket(), "/" + uuid.toString(), source);
     }
 
     @Override
     public void restoreShard(java.util.UUID uuid, java.io.File target)
     {
         try {
-            new TransferManager().download(config.getS3Bucket(), s3Directory + uuid.toString(), target).waitForCompletion();
+            new TransferManager(s3Client).download(config.getS3Bucket(), "/" + uuid.toString(), target).waitForCompletion();
         }
         catch (InterruptedException e) {
             throw Throwables.propagate(e);
@@ -59,7 +56,7 @@ public class S3BackupStore implements BackupStore
     public boolean shardExists(java.util.UUID uuid)
     {
         try {
-            s3Client.getObjectMetadata(config.getS3Bucket(), s3Directory + uuid.toString());
+            s3Client.getObjectMetadata(config.getS3Bucket(), "/" + uuid.toString());
             return true;
         }
         catch (AmazonS3Exception e) {
