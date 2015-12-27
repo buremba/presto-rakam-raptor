@@ -13,7 +13,9 @@
  */
 package com.facebook.presto.rakam;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -79,8 +81,11 @@ public class S3BackupConfig
         return secretAccessKey;
     }
 
-    public StaticCredentialsProvider getCredentials()
+    public AWSCredentialsProvider getCredentials()
     {
+        if (accessKey == null && secretAccessKey == null) {
+            return new InstanceProfileCredentialsProvider();
+        }
         return new StaticCredentialsProvider(new BasicAWSCredentials(getAccessKey(), getSecretAccessKey()));
     }
 }
