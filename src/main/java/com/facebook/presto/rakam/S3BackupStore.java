@@ -38,14 +38,14 @@ public class S3BackupStore implements BackupStore
     @Override
     public void backupShard(java.util.UUID uuid, java.io.File source)
     {
-        s3Client.putObject(config.getS3Bucket(), "/" + uuid.toString(), source);
+        s3Client.putObject(config.getS3Bucket(), uuid.toString(), source);
     }
 
     @Override
     public void restoreShard(java.util.UUID uuid, java.io.File target)
     {
         try {
-            new TransferManager(s3Client).download(config.getS3Bucket(), "/" + uuid.toString(), target).waitForCompletion();
+            new TransferManager(s3Client).download(config.getS3Bucket(), uuid.toString(), target).waitForCompletion();
         }
         catch (InterruptedException e) {
             throw Throwables.propagate(e);
