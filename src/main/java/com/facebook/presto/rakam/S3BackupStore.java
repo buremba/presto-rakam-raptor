@@ -56,7 +56,7 @@ public class S3BackupStore implements BackupStore
     public boolean shardExists(java.util.UUID uuid)
     {
         try {
-            s3Client.getObjectMetadata(config.getS3Bucket(), "/" + uuid.toString());
+            s3Client.getObjectMetadata(config.getS3Bucket(), uuid.toString());
             return true;
         }
         catch (AmazonS3Exception e) {
