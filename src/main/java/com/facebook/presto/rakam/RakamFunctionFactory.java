@@ -40,7 +40,8 @@ import static com.facebook.presto.type.TypeUtils.parameterizedTypeName;
 import static com.facebook.presto.util.Reflection.methodHandle;
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class RakamFunctionFactory implements FunctionFactory
+public class RakamFunctionFactory
+        implements FunctionFactory
 {
     private final TypeManager typeManager;
 
@@ -52,11 +53,14 @@ public class RakamFunctionFactory implements FunctionFactory
     @Override
     public List<ParametricFunction> listFunctions()
     {
-        return new FunctionListBuilder(typeManager).function(new ArraySumFunction()).getFunctions();
+        return new FunctionListBuilder(typeManager)
+                .function(new ArraySumFunction())
+                .getFunctions();
     }
 
-    public static class ArraySumFunction implements ParametricFunction {
-
+    public static class ArraySumFunction
+            implements ParametricFunction
+    {
         private static final Signature SIGNATURE = new Signature("array_sum", SCALAR, ImmutableList.of(typeParameter("E")), "E", ImmutableList.of("array<E>"), false);
         private static final Map<Class<?>, MethodHandle> METHOD_HANDLES = ImmutableMap.<Class<?>, MethodHandle>builder()
                 .put(long.class, methodHandle(ArraySumFunction.class, "bigintArraySum", Block.class))
@@ -95,7 +99,7 @@ public class RakamFunctionFactory implements FunctionFactory
 
             MethodHandle methodHandle = METHOD_HANDLES.get(elementType.getJavaType());
 
-            if(methodHandle == null) {
+            if (methodHandle == null) {
                 throw new PrestoException(StandardErrorCode.INVALID_FUNCTION_ARGUMENT, "array_sum can only be used for  array<bigint> and array<double>.");
             }
 

@@ -36,14 +36,16 @@ import java.util.List;
 import static io.airlift.configuration.ConfigBinder.configBinder;
 import static java.util.Objects.requireNonNull;
 
-public class RakamRaptorPlugin extends RaptorPlugin
+public class RakamRaptorPlugin
+        extends RaptorPlugin
 {
     private MetadataManager metadataManager;
     private TypeManager typeManager;
 
     public RakamRaptorPlugin()
     {
-        super("rakam_raptor", new AbstractConfigurationAwareModule() {
+        super("rakam_raptor", new AbstractConfigurationAwareModule()
+        {
             @Override
             protected void setup(Binder binder)
             {
@@ -69,7 +71,6 @@ public class RakamRaptorPlugin extends RaptorPlugin
             {
                 return dataSource::getConnection;
             }
-
         }, ImmutableMap.of("s3", new S3BackupStoreModule()));
     }
 
@@ -81,7 +82,6 @@ public class RakamRaptorPlugin extends RaptorPlugin
         }
         return super.getServices(type);
     }
-
 
     @Inject
     public void setTypeManager(TypeManager typeManager)
