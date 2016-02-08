@@ -10,4 +10,4 @@ build:
     - script:
         name: Run maven
         code: |
-          mvn clean install -Dair.check.skip-license=true
+          mvn clean install -Dair.check.skip-license=true  -Dair.check.skip-checkstyle=true
