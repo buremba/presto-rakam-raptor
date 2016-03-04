@@ -23,7 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
-import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import io.airlift.configuration.AbstractConfigurationAwareModule;
 import org.skife.jdbi.v2.tweak.ConnectionFactory;
 
@@ -56,12 +57,16 @@ public class RakamRaptorPlugin
             @Provides
             public DataSource getDataSource(JDBCConfig config)
             {
-                MysqlConnectionPoolDataSource e1 = new MysqlConnectionPoolDataSource();
-                e1.setServerName(config.getHost());
-                e1.setPassword(config.getPassword());
-                e1.setUser(config.getUsername());
-                e1.setDatabaseName(config.getDatabase());
-                return e1;
+                HikariConfig hikariConfig = new HikariConfig();
+                hikariConfig.setDataSourceClassName(com.mysql.jdbc.jdbc2.optional.MysqlDataSource.class.getName());
+                hikariConfig.setUsername(config.getUsername());
+                hikariConfig.setPassword(config.getPassword());
+                hikariConfig.addDataSourceProperty("databaseName", config.getDatabase());
+                hikariConfig.addDataSourceProperty("serverName", config.getHost());
+                hikariConfig.setMaximumPoolSize(20);
+                hikariConfig.setPoolName("presto-metadata-pool");
+
+                return new HikariDataSource(hikariConfig);
             }
 
             @ForMetadata
