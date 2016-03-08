@@ -57,16 +57,18 @@ public class RakamRaptorPlugin
             @Provides
             public DataSource getDataSource(JDBCConfig config)
             {
-                HikariConfig hikariConfig = new HikariConfig();
-                hikariConfig.setDataSourceClassName(com.mysql.jdbc.jdbc2.optional.MysqlDataSource.class.getName());
-                hikariConfig.setUsername(config.getUsername());
-                hikariConfig.setPassword(config.getPassword());
-                hikariConfig.addDataSourceProperty("databaseName", config.getDatabase());
-                hikariConfig.addDataSourceProperty("serverName", config.getHost());
-                hikariConfig.setMaximumPoolSize(20);
-                hikariConfig.setPoolName("presto-metadata-pool");
+                HikariConfig poolConfig = new HikariConfig();
+                poolConfig.setDataSourceClassName(com.mysql.jdbc.jdbc2.optional.MysqlDataSource.class.getName());
 
-                return new HikariDataSource(hikariConfig);
+                poolConfig.setUsername(config.getUsername());
+                poolConfig.setPassword(config.getPassword());
+                poolConfig.addDataSourceProperty("databaseName", config.getDatabase());
+                poolConfig.addDataSourceProperty("serverName", config.getHost());
+                poolConfig.setMaximumPoolSize(100);
+
+                poolConfig.setPoolName("presto-metadata-pool");
+
+                return new HikariDataSource(poolConfig);
             }
 
             @ForMetadata
