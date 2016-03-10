@@ -71,7 +71,7 @@ public class RakamRaptorPlugin
 
                 MysqlConnectionPoolDataSource dataSource = new MysqlConnectionPoolDataSource();
                 dataSource.setUser(config.getUsername());
-                dataSource.setUser(config.getPassword());
+                dataSource.setPassword(config.getPassword());
                 dataSource.setServerName(config.getHost());
                 dataSource.setDatabaseName(config.getDatabase());
 
