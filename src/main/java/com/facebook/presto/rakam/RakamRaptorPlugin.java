@@ -23,8 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import com.mysql.jdbc.jdbc2.optional.MysqlConnectionPoolDataSource;
 import io.airlift.configuration.AbstractConfigurationAwareModule;
 import org.skife.jdbi.v2.tweak.ConnectionFactory;
 
@@ -57,18 +56,26 @@ public class RakamRaptorPlugin
             @Provides
             public DataSource getDataSource(JDBCConfig config)
             {
-                HikariConfig poolConfig = new HikariConfig();
-                poolConfig.setDataSourceClassName(com.mysql.jdbc.jdbc2.optional.MysqlDataSource.class.getName());
+//                HikariConfig poolConfig = new HikariConfig();
+//                poolConfig.setDataSourceClassName(com.mysql.jdbc.jdbc2.optional.MysqlDataSource.class.getName());
+//
+//                poolConfig.setUsername(config.getUsername());
+//                poolConfig.setPassword(config.getPassword());
+//                poolConfig.addDataSourceProperty("databaseName", config.getDatabase());
+//                poolConfig.addDataSourceProperty("serverName", config.getHost());
+//                poolConfig.setMaximumPoolSize(100);
+//
+//                poolConfig.setPoolName("presto-metadata-pool");
+//
+//                return new HikariDataSource(poolConfig);
 
-                poolConfig.setUsername(config.getUsername());
-                poolConfig.setPassword(config.getPassword());
-                poolConfig.addDataSourceProperty("databaseName", config.getDatabase());
-                poolConfig.addDataSourceProperty("serverName", config.getHost());
-                poolConfig.setMaximumPoolSize(100);
+                MysqlConnectionPoolDataSource dataSource = new MysqlConnectionPoolDataSource();
+                dataSource.setUser(config.getUsername());
+                dataSource.setUser(config.getPassword());
+                dataSource.setServerName(config.getHost());
+                dataSource.setDatabaseName(config.getDatabase());
 
-                poolConfig.setPoolName("presto-metadata-pool");
-
-                return new HikariDataSource(poolConfig);
+                return dataSource;
             }
 
             @ForMetadata
