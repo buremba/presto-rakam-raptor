@@ -38,7 +38,7 @@ public class CardinalityRSetFunction
 {
     public static final CardinalityRSetFunction SET_CARDINALITY = new CardinalityRSetFunction();
     private static final Signature SIGNATURE = new Signature("cardinality", SCALAR, ImmutableList.of(typeParameter("K")), "bigint", ImmutableList.of("set<K>"), false);
-    private static final MethodHandle METHOD_HANDLE = methodHandle(CardinalityRSetFunction.class, "mapCardinality", Slice.class);
+    private static final MethodHandle METHOD_HANDLE = methodHandle(RHashSet.class, "cardinality", Slice.class);
 
     @Override
     public Signature getSignature()
@@ -77,10 +77,5 @@ public class CardinalityRSetFunction
                 isDeterministic(),
                 false,
                 ImmutableList.of(false));
-    }
-
-    public static long mapCardinality(Slice block)
-    {
-        return RHashSet.cardinality(block);
     }
 }

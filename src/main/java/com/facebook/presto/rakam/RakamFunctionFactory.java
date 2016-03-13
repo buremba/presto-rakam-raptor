@@ -23,7 +23,6 @@ import com.facebook.presto.rakam.set.CardinalityIntersectionRSetFunction;
 import com.facebook.presto.rakam.set.CardinalityRSetFunction;
 import com.facebook.presto.rakam.set.CastSetToVarbinaryFunction;
 import com.facebook.presto.rakam.set.MergeRSetAggregation;
-import com.facebook.presto.rakam.set.RHashSetFunctions;
 import com.facebook.presto.rakam.set.RHashSetOperators;
 import com.facebook.presto.rakam.set.RSetAggregationFunction;
 import com.facebook.presto.spi.PrestoException;
@@ -71,7 +70,6 @@ public class RakamFunctionFactory
                 .function(new MergeRSetAggregation(serde))
                 .function(new CardinalityIntersectionRSetFunction(serde))
                 .scalar(RHashSetOperators.class)
-                .scalar(RHashSetFunctions.class)
                 .getFunctions();
     }
 
