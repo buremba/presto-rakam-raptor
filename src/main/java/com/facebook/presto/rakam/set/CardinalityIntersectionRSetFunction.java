@@ -76,7 +76,7 @@ public class CardinalityIntersectionRSetFunction
                 SIGNATURE,
                 "Merges two sets and returns the cardinality of the final set",
                 isHidden(),
-                METHOD_HANDLE.bindTo(types).bindTo(serde).bindTo(typeManager).bindTo(types.get(0)).bindTo(types.get(1)),
+                METHOD_HANDLE.bindTo(serde).bindTo(typeManager).bindTo(types.get(0)).bindTo(types.get(1)),
                 isDeterministic(),
                 false,
                 ImmutableList.of(false, false));
