@@ -312,4 +312,17 @@ public class BlockRHashSet
     {
         return currentPageBuilder;
     }
+
+    @Override
+    public int cardinalityMerge(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
+    {
+        Block otherItems = RHashSet.getBlock(type, typeManager, serde, otherSet);
+        int cardinality = 0;
+        for (int i = 0; i < otherItems.getPositionCount(); i++) {
+            if (contains(i, otherItems)) {
+                cardinality++;
+            }
+        }
+        return cardinality;
+    }
 }

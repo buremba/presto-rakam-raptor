@@ -70,4 +70,6 @@ public interface RHashSet
             return new BlockRHashSet(serde, typeManager, slice);
         }
     }
+
+    int cardinalityMerge(TypeManager typeManager, BlockEncodingSerde serde, Slice set);
 }

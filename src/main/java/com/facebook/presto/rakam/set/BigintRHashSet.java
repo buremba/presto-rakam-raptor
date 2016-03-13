@@ -17,11 +17,13 @@ import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
 import com.facebook.presto.spi.block.BlockBuilderStatus;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
+import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.base.Throwables;
 import io.airlift.slice.BasicSliceInput;
 import io.airlift.slice.DynamicSliceOutput;
 import io.airlift.slice.SizeOf;
 import io.airlift.slice.Slice;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 import java.io.IOException;
@@ -97,6 +99,24 @@ public class BigintRHashSet
         BlockBuilder builder = BIGINT.createBlockBuilder(new BlockBuilderStatus(), set.size());
         set.iterator().forEachRemaining(it -> BIGINT.writeLong(builder, it));
         return builder.build();
+    }
+
+    private LongOpenHashSet getSet()
+    {
+        return set;
+    }
+
+    @Override
+    public int cardinalityMerge(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSlice)
+    {
+        LongIterator iterator = new BigintRHashSet(otherSlice).getSet().iterator();
+        int cardinality = 0;
+        while (iterator.hasNext()) {
+            if (set.contains(iterator.nextLong())) {
+                cardinality++;
+            }
+        }
+        return cardinality;
     }
 
     @Override

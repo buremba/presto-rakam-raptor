@@ -17,7 +17,6 @@ import com.facebook.presto.metadata.FunctionInfo;
 import com.facebook.presto.metadata.FunctionRegistry;
 import com.facebook.presto.metadata.ParametricFunction;
 import com.facebook.presto.metadata.Signature;
-import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
@@ -88,13 +87,7 @@ public class CardinalityIntersectionRSetFunction
         boolean isSet1Bigger = RHashSet.cardinality(set1) > RHashSet.cardinality(set2);
 
         RHashSet set = RHashSet.create(type, serde, typeManager, isSet1Bigger ? set1 : set2);
-        Block otherItems = RHashSet.getBlock(type, typeManager, serde, isSet1Bigger ? set2 : set1);
-        int cardinality = 0;
-        for (int i = 0; i < otherItems.getPositionCount(); i++) {
-            if (set.contains(i, otherItems)) {
-                cardinality++;
-            }
-        }
-        return cardinality;
+
+        return set.cardinalityMerge(typeManager, serde, set2);
     }
 }
