@@ -19,9 +19,17 @@ import com.facebook.presto.metadata.FunctionListBuilder;
 import com.facebook.presto.metadata.FunctionRegistry;
 import com.facebook.presto.metadata.ParametricFunction;
 import com.facebook.presto.metadata.Signature;
+import com.facebook.presto.rakam.set.CardinalityIntersectionRSetFunction;
+import com.facebook.presto.rakam.set.CardinalityRSetFunction;
+import com.facebook.presto.rakam.set.CastSetToVarbinaryFunction;
+import com.facebook.presto.rakam.set.MergeRSetAggregation;
+import com.facebook.presto.rakam.set.RHashSetFunctions;
+import com.facebook.presto.rakam.set.RHashSetOperators;
+import com.facebook.presto.rakam.set.RSetAggregationFunction;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.StandardErrorCode;
 import com.facebook.presto.spi.block.Block;
+import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.StandardTypes;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
@@ -44,23 +52,34 @@ public class RakamFunctionFactory
         implements FunctionFactory
 {
     private final TypeManager typeManager;
+    private final BlockEncodingSerde serde;
 
-    public RakamFunctionFactory(TypeManager typeManager)
+    public RakamFunctionFactory(TypeManager typeManager, BlockEncodingSerde serde)
     {
         this.typeManager = typeManager;
+        this.serde = serde;
     }
 
     @Override
     public List<ParametricFunction> listFunctions()
     {
         return new FunctionListBuilder(typeManager)
-                .function(new ArraySumFunction())
+                .function(ArraySumFunction.ARRAY_SUM_AGGREGATION)
+                .function(new RSetAggregationFunction(serde))
+                .function(CastSetToVarbinaryFunction.CAST_OPERATOR)
+                .function(CardinalityRSetFunction.SET_CARDINALITY)
+                .function(new MergeRSetAggregation(serde))
+                .function(new CardinalityIntersectionRSetFunction(serde))
+                .scalar(RHashSetOperators.class)
+                .scalar(RHashSetFunctions.class)
                 .getFunctions();
     }
 
     public static class ArraySumFunction
             implements ParametricFunction
     {
+        public static final ArraySumFunction ARRAY_SUM_AGGREGATION = new ArraySumFunction();
+
         private static final Signature SIGNATURE = new Signature("array_sum", SCALAR, ImmutableList.of(typeParameter("E")), "E", ImmutableList.of("array<E>"), false);
         private static final Map<Class<?>, MethodHandle> METHOD_HANDLES = ImmutableMap.<Class<?>, MethodHandle>builder()
                 .put(long.class, methodHandle(ArraySumFunction.class, "bigintArraySum", Block.class))

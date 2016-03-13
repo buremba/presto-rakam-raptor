@@ -16,9 +16,12 @@ package com.facebook.presto.rakam;
 
 import com.facebook.presto.metadata.FunctionFactory;
 import com.facebook.presto.metadata.MetadataManager;
+import com.facebook.presto.rakam.set.RHashSetParametricType;
 import com.facebook.presto.raptor.RaptorPlugin;
 import com.facebook.presto.raptor.metadata.ForMetadata;
+import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.TypeManager;
+import com.facebook.presto.type.ParametricType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Binder;
@@ -41,6 +44,7 @@ public class RakamRaptorPlugin
 {
     private MetadataManager metadataManager;
     private TypeManager typeManager;
+    private BlockEncodingSerde serde;
 
     public RakamRaptorPlugin()
     {
@@ -92,7 +96,10 @@ public class RakamRaptorPlugin
     public <T> List<T> getServices(Class<T> type)
     {
         if (type == FunctionFactory.class) {
-            return ImmutableList.of(type.cast(new RakamFunctionFactory(typeManager)));
+            return ImmutableList.of(type.cast(new RakamFunctionFactory(typeManager, serde)));
+        }
+        else if (type == ParametricType.class) {
+            return ImmutableList.of(type.cast(new RHashSetParametricType(serde, typeManager)));
         }
         return super.getServices(type);
     }
@@ -102,5 +109,12 @@ public class RakamRaptorPlugin
     {
         super.setTypeManager(typeManager);
         this.typeManager = requireNonNull(typeManager, "typeManager is null");
+    }
+
+    @Inject
+    public void setBlockEncodingSerde(BlockEncodingSerde serde)
+    {
+        super.setBlockEncodingSerde(serde);
+        this.serde = requireNonNull(serde, "serde is null");
     }
 }
