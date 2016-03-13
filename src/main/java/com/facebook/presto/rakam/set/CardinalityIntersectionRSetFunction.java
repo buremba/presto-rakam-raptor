@@ -36,7 +36,7 @@ public class CardinalityIntersectionRSetFunction
         implements ParametricFunction
 {
     private static final Signature SIGNATURE = new Signature("cardinality_intersection", SCALAR, ImmutableList.of(typeParameter("K")), "bigint", ImmutableList.of("set<K>", "set<K>"), false);
-    private static final MethodHandle METHOD_HANDLE = methodHandle(CardinalityIntersectionRSetFunction.class, "cardinalityIntersection", BlockEncodingSerde.class, TypeManager.class, Type.class, Type.class, Slice.class, Slice.class);
+    private static final MethodHandle METHOD_HANDLE = methodHandle(CardinalityIntersectionRSetFunction.class, "cardinalityIntersection", BlockEncodingSerde.class, TypeManager.class, Type.class, Slice.class, Slice.class);
     private final BlockEncodingSerde serde;
 
     public CardinalityIntersectionRSetFunction(BlockEncodingSerde serde)
@@ -76,19 +76,19 @@ public class CardinalityIntersectionRSetFunction
                 SIGNATURE,
                 "Merges two sets and returns the cardinality of the final set",
                 isHidden(),
-                METHOD_HANDLE.bindTo(serde).bindTo(typeManager).bindTo(types.get(0)).bindTo(types.get(1)),
+                METHOD_HANDLE.bindTo(serde).bindTo(typeManager).bindTo(types.get("K")),
                 isDeterministic(),
                 false,
                 ImmutableList.of(false, false));
     }
 
-    public static long cardinalityIntersection(BlockEncodingSerde serde, TypeManager typeManager, Type type1, Type type2, Slice set1, Slice set2)
+    public static long cardinalityIntersection(BlockEncodingSerde serde, TypeManager typeManager, Type type, Slice set1, Slice set2)
     {
-        // use bigger set as base to optimization
+        // use bigger set as base set for optimization
         boolean isSet1Bigger = RHashSet.cardinality(set1) > RHashSet.cardinality(set2);
 
-        RHashSet set = RHashSet.create(isSet1Bigger ? type1 : type2, serde, typeManager, isSet1Bigger ? set1 : set2);
-        Block otherItems = RHashSet.getBlock(isSet1Bigger ? type2 : type1, typeManager, serde, isSet1Bigger ? set2 : set1);
+        RHashSet set = RHashSet.create(type, serde, typeManager, isSet1Bigger ? set1 : set2);
+        Block otherItems = RHashSet.getBlock(type, typeManager, serde, isSet1Bigger ? set2 : set1);
         int cardinality = 0;
         for (int i = 0; i < otherItems.getPositionCount(); i++) {
             if (set.contains(i, otherItems)) {
