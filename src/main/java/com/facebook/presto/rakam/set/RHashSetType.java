@@ -98,7 +98,9 @@ public class RHashSetType
 
         List<Object> values = new ArrayList<>(set.getDistinctCount());
 
-        for (int i = 0; i < set.getDistinctCount(); i++) {
+        // The set can contain up to Integer.MAX_VALUE elements and streaming all values in set to the client can be over-exhausting.
+        int count = Math.min(set.getDistinctCount(), 100);
+        for (int i = 0; i < count; i++) {
             values.add(elementType.getObjectValue(session, set.getBlock(), i));
         }
 
