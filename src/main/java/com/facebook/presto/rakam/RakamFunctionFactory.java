@@ -22,9 +22,12 @@ import com.facebook.presto.metadata.Signature;
 import com.facebook.presto.rakam.set.CardinalityIntersectionRSetFunction;
 import com.facebook.presto.rakam.set.CardinalityRSetFunction;
 import com.facebook.presto.rakam.set.CastSetToVarbinaryFunction;
+import com.facebook.presto.rakam.set.ComplementRHashSet;
+import com.facebook.presto.rakam.set.IntersectionRSetFunction;
 import com.facebook.presto.rakam.set.MergeRSetAggregation;
 import com.facebook.presto.rakam.set.RHashSetOperators;
 import com.facebook.presto.rakam.set.RSetAggregationFunction;
+import com.facebook.presto.rakam.set.RelativeComplementRHashSet;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.StandardErrorCode;
 import com.facebook.presto.spi.block.Block;
@@ -68,6 +71,9 @@ public class RakamFunctionFactory
                 .function(CastSetToVarbinaryFunction.CAST_OPERATOR)
                 .function(CardinalityRSetFunction.SET_CARDINALITY)
                 .function(new MergeRSetAggregation(serde))
+                .function(new RelativeComplementRHashSet(serde))
+                .function(new ComplementRHashSet(serde))
+                .function(new IntersectionRSetFunction(serde))
                 .function(new CardinalityIntersectionRSetFunction(serde))
                 .scalar(RHashSetOperators.class)
                 .getFunctions();

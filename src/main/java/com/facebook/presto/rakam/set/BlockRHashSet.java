@@ -49,9 +49,8 @@ public class BlockRHashSet
     private int maxFill;
     private int mask;
     private int nextGroupId;
-    private int[] groupIdsByHash;
     private long[] groupAddressByHash;
-    private BlockBuilder currentPageBuilder;
+    private BlockBuilder currentBlockBuilder;
 
     public BlockRHashSet(Type type, int expectedSize)
     {
@@ -61,12 +60,11 @@ public class BlockRHashSet
         mask = hashSize - 1;
         groupAddressByHash = new long[hashSize];
         Arrays.fill(groupAddressByHash, -1);
-        groupIdsByHash = new int[hashSize];
         this.type = type;
 
         // Do not obey PageBuilderStatus,
         // currently we support maximum Integer.MAX_VALUE distinct items.
-        currentPageBuilder = type.createBlockBuilder(new BlockBuilderStatus(), expectedSize);
+        currentBlockBuilder = type.createBlockBuilder(new BlockBuilderStatus(), expectedSize);
     }
 
     public BlockRHashSet(BlockEncodingSerde serde, TypeManager typeManager, Slice slice)
@@ -76,23 +74,23 @@ public class BlockRHashSet
 
         this.type = TypeSerde.readType(typeManager, input);
 
-        Block blockBuilder = serde.readBlockEncoding(input).readBlock(input);
-        currentPageBuilder = type.createBlockBuilder(new BlockBuilderStatus(), blockBuilder.getPositionCount());
-        for (int i = 0; i < blockBuilder.getPositionCount(); i++) {
-            blockBuilder.writePositionTo(i, currentPageBuilder);
-            currentPageBuilder.closeEntry();
+        if (nextGroupId > 0) {
+            Block blockBuilder = serde.readBlockEncoding(input).readBlock(input);
+            currentBlockBuilder = type.createBlockBuilder(new BlockBuilderStatus(), blockBuilder.getPositionCount());
+            for (int i = 0; i < blockBuilder.getPositionCount(); i++) {
+                blockBuilder.writePositionTo(i, currentBlockBuilder);
+                currentBlockBuilder.closeEntry();
+            }
+        }
+        else {
+            currentBlockBuilder = type.createBlockBuilder(new BlockBuilderStatus(), 100);
         }
 
         maxFill = input.readInt();
         mask = input.readInt();
 
-        groupIdsByHash = new int[input.readInt()];
-        for (int i = 0; i < groupIdsByHash.length; i++) {
-            groupIdsByHash[i] = input.readInt();
-        }
-
         groupAddressByHash = new long[input.readInt()];
-        for (int i = 0; i < groupIdsByHash.length; i++) {
+        for (int i = 0; i < groupAddressByHash.length; i++) {
             groupAddressByHash[i] = input.readLong();
         }
     }
@@ -100,11 +98,16 @@ public class BlockRHashSet
     public static Block getBlock(TypeManager typeManager, BlockEncodingSerde serde, Slice serializedSet)
     {
         BasicSliceInput input = serializedSet.getInput();
-        input.readInt();
+        int position = input.readInt();
 
-        TypeSerde.readType(typeManager, input);
+        Type type = TypeSerde.readType(typeManager, input);
 
-        return serde.readBlockEncoding(input).readBlock(input);
+        if (position > 0) {
+            return serde.readBlockEncoding(input).readBlock(input);
+        }
+        else {
+            return type.createBlockBuilder(new BlockBuilderStatus(), 0);
+        }
     }
 
     @Override
@@ -116,16 +119,14 @@ public class BlockRHashSet
 
         TypeSerde.writeType(output, type);
 
-        BlockEncoding encoding = currentPageBuilder.getEncoding();
-        serde.writeBlockEncoding(output, encoding);
-        encoding.writeBlock(output, currentPageBuilder);
+        if (nextGroupId > 0) {
+            BlockEncoding encoding = currentBlockBuilder.getEncoding();
+            serde.writeBlockEncoding(output, encoding);
+            encoding.writeBlock(output, currentBlockBuilder);
+        }
 
         output.writeInt(maxFill);
         output.writeInt(mask);
-        output.writeInt(groupIdsByHash.length);
-        for (int l : groupIdsByHash) {
-            output.writeInt(l);
-        }
         output.writeInt(groupAddressByHash.length);
         for (long l : groupAddressByHash) {
             output.writeLong(l);
@@ -140,13 +141,12 @@ public class BlockRHashSet
         int hashPosition = getHashPosition(rawHash, mask);
 
         // look for an empty slot or a slot containing this key
-        int groupId = -1;
+        boolean found = false;
         while (groupAddressByHash[hashPosition] != -1) {
             long address = groupAddressByHash[hashPosition];
             if (positionEqualsCurrentRow(decodePosition(address), position, page)) {
                 // found an existing slot for this key
-                groupId = groupIdsByHash[hashPosition];
-
+                found = true;
                 break;
             }
             // increment position and mask to handle wrap around
@@ -154,17 +154,16 @@ public class BlockRHashSet
         }
 
         // did we find an existing group?
-        if (groupId < 0) {
-            groupId = addNewGroup(hashPosition, position, page);
+        if (!found) {
+            addNewGroup(hashPosition, position, page);
         }
     }
 
     @Override
     public long getEstimatedSize()
     {
-        return currentPageBuilder.getRetainedSizeInBytes() +
-                sizeOf(groupAddressByHash) +
-                sizeOf(groupIdsByHash) + (4 * 3) + 8;
+        return currentBlockBuilder.getRetainedSizeInBytes() +
+                sizeOf(groupAddressByHash) + (4 * 3) + 8;
     }
 
     private int hashPosition(int position, Block blocks)
@@ -194,30 +193,25 @@ public class BlockRHashSet
         return maxFill;
     }
 
-    private boolean positionEqualsRow(int leftPosition, int rightPosition, Block... rightBlocks)
+    private boolean positionEqualsRow(int leftPosition, int rightPosition, Block rightBlock)
     {
-        Block rightBlock = rightBlocks[0];
-        if (!TypeUtils.positionEqualsPosition(type, currentPageBuilder, leftPosition, rightBlock, rightPosition)) {
-            return false;
-        }
-        return true;
+        return TypeUtils.positionEqualsPosition(type, currentBlockBuilder,
+                leftPosition, rightBlock, rightPosition);
     }
 
-    private int addNewGroup(int hashPosition, int position, Block page)
+    private void addNewGroup(int hashPosition, int position, Block page)
     {
         // add the row to the open page
-        type.appendTo(page, position, currentPageBuilder);
-        int pagePosition = currentPageBuilder.getPositionCount() - 1;
+        type.appendTo(page, position, currentBlockBuilder);
+        int pagePosition = currentBlockBuilder.getPositionCount() - 1;
         long address = encodeSyntheticAddress(0, pagePosition);
 
-        // record group id in hash
-        int groupId = nextGroupId++;
+        nextGroupId++;
 
         groupAddressByHash[hashPosition] = address;
-        groupIdsByHash[hashPosition] = groupId;
 
         // create new page builder if this page is full
-        if (currentPageBuilder.getPositionCount() >= Integer.MAX_VALUE) {
+        if (currentBlockBuilder.getPositionCount() >= Integer.MAX_VALUE) {
             throw new RuntimeException(new LimitExceededException());
         }
 
@@ -225,7 +219,6 @@ public class BlockRHashSet
         if (nextGroupId >= maxFill) {
             rehash(maxFill * 2);
         }
-        return groupId;
     }
 
     private void rehash(int size)
@@ -235,7 +228,6 @@ public class BlockRHashSet
         int newMask = newSize - 1;
         long[] newKey = new long[newSize];
         Arrays.fill(newKey, -1);
-        int[] newValue = new int[newSize];
 
         int oldIndex = 0;
         for (int groupId = 0; groupId < nextGroupId; groupId++) {
@@ -255,19 +247,17 @@ public class BlockRHashSet
 
             // record the mapping
             newKey[pos] = address;
-            newValue[pos] = groupIdsByHash[oldIndex];
             oldIndex++;
         }
 
         this.mask = newMask;
         this.maxFill = calculateMaxFill(newSize);
         this.groupAddressByHash = newKey;
-        this.groupIdsByHash = newValue;
     }
 
     private int hashPosition(long sliceAddress)
     {
-        return TypeUtils.hashPosition(type, currentPageBuilder, decodePosition(sliceAddress));
+        return TypeUtils.hashPosition(type, currentBlockBuilder, decodePosition(sliceAddress));
     }
 
     @Override
@@ -310,11 +300,11 @@ public class BlockRHashSet
     @Override
     public Block getBlock()
     {
-        return currentPageBuilder;
+        return currentBlockBuilder;
     }
 
     @Override
-    public int cardinalityMerge(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
+    public int cardinalityIntersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
     {
         Block otherItems = RHashSet.getBlock(type, typeManager, serde, otherSet);
         int cardinality = 0;
@@ -324,5 +314,57 @@ public class BlockRHashSet
             }
         }
         return cardinality;
+    }
+
+    @Override
+    public int cardinalitySubtract(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
+    {
+        Block otherItems = RHashSet.getBlock(type, typeManager, serde, otherSet);
+        int cardinality = getDistinctCount();
+        for (int i = 0; i < otherItems.getPositionCount(); i++) {
+            if (contains(i, otherItems)) {
+                cardinality--;
+            }
+        }
+        return cardinality;
+    }
+
+    @Override
+    public void subtract(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
+    {
+        BlockRHashSet newSet = new BlockRHashSet(type, 32);
+
+        RHashSet otherItems = RHashSet.create(type, serde, typeManager, otherSet);
+        for (int i = 0; i < getDistinctCount(); i++) {
+            if (!otherItems.contains(i, currentBlockBuilder)) {
+                newSet.putIfAbsent(i, currentBlockBuilder);
+            }
+        }
+
+        nextGroupId = newSet.nextGroupId;
+        currentBlockBuilder = newSet.currentBlockBuilder;
+        groupAddressByHash = newSet.groupAddressByHash;
+        mask = newSet.mask;
+        maxFill = newSet.maxFill;
+    }
+
+    @Override
+    public void intersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
+    {
+        BlockRHashSet newSet = new BlockRHashSet(type, 32);
+
+        Block otherItems = RHashSet.getBlock(type, typeManager, serde, otherSet);
+
+        for (int i = 0; i < otherItems.getPositionCount(); i++) {
+            if (contains(i, otherItems)) {
+                newSet.putIfAbsent(i, otherItems);
+            }
+        }
+
+        nextGroupId = newSet.nextGroupId;
+        currentBlockBuilder = newSet.currentBlockBuilder;
+        groupAddressByHash = newSet.groupAddressByHash;
+        mask = newSet.mask;
+        maxFill = newSet.maxFill;
     }
 }

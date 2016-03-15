@@ -132,6 +132,93 @@ public class TestRHashSet
         }
     }
 
+    @Test(dataProvider = "types")
+    public void testSubtract(Type type)
+            throws Exception
+    {
+        RHashSet rHashSet = RHashSet.create(type);
+
+        Block sequenceBlock = createSequenceBlock(type, 0, 500);
+        rHashSet.addBlock(sequenceBlock);
+
+        RHashSet smallSet = RHashSet.create(type);
+        smallSet.addBlock(createSequenceBlock(type, 0, 200));
+
+        MetadataManager metadata = MetadataManager.createTestMetadataManager();
+        rHashSet.subtract(metadata.getTypeManager(), metadata.getBlockEncodingSerde(),
+                smallSet.serialize(metadata.getBlockEncodingSerde()));
+
+        assertEquals(rHashSet.getDistinctCount(), 300);
+        for (int i = 0; i < 500; i++) {
+            if (i >= 200) {
+                assertTrue(rHashSet.contains(i, sequenceBlock));
+            }
+            else {
+                assertFalse(rHashSet.contains(i, sequenceBlock));
+            }
+        }
+    }
+
+    @Test(dataProvider = "types")
+    public void testIntersection(Type type)
+            throws Exception
+    {
+        RHashSet rHashSet = RHashSet.create(type);
+
+        Block sequenceBlock = createSequenceBlock(type, 0, 500);
+        rHashSet.addBlock(sequenceBlock);
+
+        RHashSet smallSet = RHashSet.create(type);
+        smallSet.addBlock(createSequenceBlock(type, 0, 200));
+
+        MetadataManager metadata = MetadataManager.createTestMetadataManager();
+        rHashSet.intersection(metadata.getTypeManager(), metadata.getBlockEncodingSerde(),
+                smallSet.serialize(metadata.getBlockEncodingSerde()));
+
+        assertEquals(rHashSet.getDistinctCount(), 200);
+        for (int i = 0; i < 200; i++) {
+            assertTrue(rHashSet.contains(i, sequenceBlock));
+        }
+    }
+
+    @Test(dataProvider = "types")
+    public void testCardinalityIntersection(Type type)
+            throws Exception
+    {
+        RHashSet rHashSet = RHashSet.create(type);
+
+        Block sequenceBlock = createSequenceBlock(type, 0, 500);
+        rHashSet.addBlock(sequenceBlock);
+
+        RHashSet smallSet = RHashSet.create(type);
+        smallSet.addBlock(createSequenceBlock(type, 0, 200));
+
+        MetadataManager metadata = MetadataManager.createTestMetadataManager();
+        int value = rHashSet.cardinalityIntersection(metadata.getTypeManager(), metadata.getBlockEncodingSerde(),
+                smallSet.serialize(metadata.getBlockEncodingSerde()));
+
+        assertEquals(value, 200);
+    }
+
+    @Test(dataProvider = "types")
+    public void testCardinalitySubtract(Type type)
+            throws Exception
+    {
+        RHashSet rHashSet = RHashSet.create(type);
+
+        Block sequenceBlock = createSequenceBlock(type, 0, 500);
+        rHashSet.addBlock(sequenceBlock);
+
+        RHashSet smallSet = RHashSet.create(type);
+        smallSet.addBlock(createSequenceBlock(type, 0, 200));
+
+        MetadataManager metadata = MetadataManager.createTestMetadataManager();
+        int value = rHashSet.cardinalitySubtract(metadata.getTypeManager(), metadata.getBlockEncodingSerde(),
+                smallSet.serialize(metadata.getBlockEncodingSerde()));
+
+        assertEquals(value, 300);
+    }
+
     private Block createSequenceBlock(Type type, int start, int end)
     {
         if (type == VARCHAR) {

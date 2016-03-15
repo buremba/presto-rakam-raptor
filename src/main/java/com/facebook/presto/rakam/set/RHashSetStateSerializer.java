@@ -43,7 +43,12 @@ public class RHashSetStateSerializer
     @Override
     public void serialize(RHashSetState state, BlockBuilder out)
     {
-        type.writeSlice(out, state.getSet().serialize(serde));
+        if (state.getSet() == null) {
+            out.appendNull();
+        }
+        else {
+            type.writeSlice(out, state.getSet().serialize(serde));
+        }
     }
 
     @Override

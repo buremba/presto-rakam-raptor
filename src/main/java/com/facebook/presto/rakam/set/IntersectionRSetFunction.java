@@ -31,14 +31,14 @@ import static com.facebook.presto.metadata.Signature.typeParameter;
 import static com.facebook.presto.util.Reflection.methodHandle;
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class CardinalityIntersectionRSetFunction
+public class IntersectionRSetFunction
         implements ParametricFunction
 {
-    private static final Signature SIGNATURE = new Signature("cardinality_intersection", SCALAR, ImmutableList.of(typeParameter("K")), "bigint", ImmutableList.of("set<K>", "set<K>"), false);
-    private static final MethodHandle METHOD_HANDLE = methodHandle(CardinalityIntersectionRSetFunction.class, "cardinalityIntersection", BlockEncodingSerde.class, TypeManager.class, Type.class, Slice.class, Slice.class);
+    private static final Signature SIGNATURE = new Signature("intersection", SCALAR, ImmutableList.of(typeParameter("K")), "set<K>", ImmutableList.of("set<K>", "set<K>"), false);
+    private static final MethodHandle METHOD_HANDLE = methodHandle(IntersectionRSetFunction.class, "intersection", BlockEncodingSerde.class, TypeManager.class, Type.class, Slice.class, Slice.class);
     private final BlockEncodingSerde serde;
 
-    public CardinalityIntersectionRSetFunction(BlockEncodingSerde serde)
+    public IntersectionRSetFunction(BlockEncodingSerde serde)
     {
         this.serde = serde;
     }
@@ -81,13 +81,15 @@ public class CardinalityIntersectionRSetFunction
                 ImmutableList.of(false, false));
     }
 
-    public static long cardinalityIntersection(BlockEncodingSerde serde, TypeManager typeManager, Type type, Slice set1, Slice set2)
+    public static Slice intersection(BlockEncodingSerde serde, TypeManager typeManager, Type type, Slice set1, Slice set2)
     {
         // use bigger set as base set for optimization
         boolean isSet1Bigger = RHashSet.cardinality(set1) > RHashSet.cardinality(set2);
 
-        RHashSet set = RHashSet.create(type, serde, typeManager, isSet1Bigger ? set1 : set2);
+        RHashSet set = RHashSet.create(type, serde, typeManager, isSet1Bigger ? set2 : set1);
 
-        return set.cardinalityIntersection(typeManager, serde, isSet1Bigger ? set2 : set1);
+        set.intersection(typeManager, serde, set2);
+
+        return set.serialize(serde);
     }
 }

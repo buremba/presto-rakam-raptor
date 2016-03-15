@@ -107,7 +107,7 @@ public class BigintRHashSet
     }
 
     @Override
-    public int cardinalityMerge(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSlice)
+    public int cardinalityIntersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSlice)
     {
         LongIterator iterator = new BigintRHashSet(otherSlice).getSet().iterator();
         int cardinality = 0;
@@ -117,6 +117,46 @@ public class BigintRHashSet
             }
         }
         return cardinality;
+    }
+
+    @Override
+    public int cardinalitySubtract(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSlice)
+    {
+        LongIterator iterator = new BigintRHashSet(otherSlice).getSet().iterator();
+        int cardinality = getDistinctCount();
+        while (iterator.hasNext()) {
+            if (set.contains(iterator.nextLong())) {
+                cardinality--;
+            }
+        }
+        return cardinality;
+    }
+
+    @Override
+    public void subtract(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSlice)
+    {
+        LongIterator iterator = new BigintRHashSet(otherSlice).getSet().iterator();
+        while (iterator.hasNext()) {
+            set.remove(iterator.nextLong());
+        }
+    }
+
+    @Override
+    public void intersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
+    {
+        BigintRHashSet rHashSet = new BigintRHashSet(otherSet);
+        LongIterator iterator = set.iterator();
+        while (iterator.hasNext()) {
+            long value = iterator.nextLong();
+
+            if (!rHashSet.set.contains(value)) {
+                set.remove(value);
+            }
+        }
+
+        if (!rHashSet.nullExists) {
+            nullExists = false;
+        }
     }
 
     @Override

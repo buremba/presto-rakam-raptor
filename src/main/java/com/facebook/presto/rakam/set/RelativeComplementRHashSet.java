@@ -31,14 +31,13 @@ import static com.facebook.presto.metadata.Signature.typeParameter;
 import static com.facebook.presto.util.Reflection.methodHandle;
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class CardinalityIntersectionRSetFunction
-        implements ParametricFunction
+public class RelativeComplementRHashSet implements ParametricFunction
 {
-    private static final Signature SIGNATURE = new Signature("cardinality_intersection", SCALAR, ImmutableList.of(typeParameter("K")), "bigint", ImmutableList.of("set<K>", "set<K>"), false);
-    private static final MethodHandle METHOD_HANDLE = methodHandle(CardinalityIntersectionRSetFunction.class, "cardinalityIntersection", BlockEncodingSerde.class, TypeManager.class, Type.class, Slice.class, Slice.class);
+    private static final Signature SIGNATURE = new Signature("cardinality_complement", SCALAR, ImmutableList.of(typeParameter("K")), "bigint", ImmutableList.of("set<K>", "set<K>"), false);
+    private static final MethodHandle METHOD_HANDLE = methodHandle(RelativeComplementRHashSet.class, "getRelativeComplement", BlockEncodingSerde.class, TypeManager.class, Type.class, Slice.class, Slice.class);
     private final BlockEncodingSerde serde;
 
-    public CardinalityIntersectionRSetFunction(BlockEncodingSerde serde)
+    public RelativeComplementRHashSet(BlockEncodingSerde serde)
     {
         this.serde = serde;
     }
@@ -70,10 +69,10 @@ public class CardinalityIntersectionRSetFunction
     @Override
     public FunctionInfo specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
     {
-        checkArgument(arity == 2, "Cardinality expects only two argument");
+        checkArgument(arity == 2, "relative_complement expects only two argument");
         return new FunctionInfo(
                 SIGNATURE,
-                "Merges two sets and returns the cardinality of the final set",
+                "Subtracts sets and returns the cardinality",
                 isHidden(),
                 METHOD_HANDLE.bindTo(serde).bindTo(typeManager).bindTo(types.get("K")),
                 isDeterministic(),
@@ -81,13 +80,9 @@ public class CardinalityIntersectionRSetFunction
                 ImmutableList.of(false, false));
     }
 
-    public static long cardinalityIntersection(BlockEncodingSerde serde, TypeManager typeManager, Type type, Slice set1, Slice set2)
+    public static long getRelativeComplement(BlockEncodingSerde serde, TypeManager typeManager, Type type, Slice set1, Slice set2)
     {
-        // use bigger set as base set for optimization
-        boolean isSet1Bigger = RHashSet.cardinality(set1) > RHashSet.cardinality(set2);
-
-        RHashSet set = RHashSet.create(type, serde, typeManager, isSet1Bigger ? set1 : set2);
-
-        return set.cardinalityIntersection(typeManager, serde, isSet1Bigger ? set2 : set1);
+        RHashSet rHashSet = RHashSet.create(type, serde, typeManager, set1);
+        return rHashSet.cardinalitySubtract(typeManager, serde, set2);
     }
 }

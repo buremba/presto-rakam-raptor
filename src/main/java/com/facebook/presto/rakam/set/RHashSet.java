@@ -71,5 +71,11 @@ public interface RHashSet
         }
     }
 
-    int cardinalityMerge(TypeManager typeManager, BlockEncodingSerde serde, Slice set);
+    int cardinalityIntersection(TypeManager typeManager, BlockEncodingSerde serde, Slice set);
+
+    int cardinalitySubtract(TypeManager typeManager, BlockEncodingSerde serde, Slice set);
+
+    void subtract(TypeManager typeManager, BlockEncodingSerde serde, Slice set);
+
+    void intersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet);
 }
