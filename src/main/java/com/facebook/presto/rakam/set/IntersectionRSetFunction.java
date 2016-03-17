@@ -13,10 +13,9 @@
  */
 package com.facebook.presto.rakam.set;
 
-import com.facebook.presto.metadata.FunctionInfo;
 import com.facebook.presto.metadata.FunctionRegistry;
-import com.facebook.presto.metadata.ParametricFunction;
-import com.facebook.presto.metadata.Signature;
+import com.facebook.presto.metadata.SqlScalarFunction;
+import com.facebook.presto.operator.scalar.ScalarFunctionImplementation;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
@@ -26,27 +25,21 @@ import io.airlift.slice.Slice;
 import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
-import static com.facebook.presto.metadata.FunctionType.SCALAR;
 import static com.facebook.presto.metadata.Signature.typeParameter;
 import static com.facebook.presto.util.Reflection.methodHandle;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class IntersectionRSetFunction
-        implements ParametricFunction
+        extends SqlScalarFunction
 {
-    private static final Signature SIGNATURE = new Signature("intersection", SCALAR, ImmutableList.of(typeParameter("K")), "set<K>", ImmutableList.of("set<K>", "set<K>"), false);
+    private static final String NAME = "intersection";
     private static final MethodHandle METHOD_HANDLE = methodHandle(IntersectionRSetFunction.class, "intersection", BlockEncodingSerde.class, TypeManager.class, Type.class, Slice.class, Slice.class);
     private final BlockEncodingSerde serde;
 
     public IntersectionRSetFunction(BlockEncodingSerde serde)
     {
+        super(NAME, ImmutableList.of(typeParameter("K")), "set<K>", ImmutableList.of("set<K>", "set<K>"));
         this.serde = serde;
-    }
-
-    @Override
-    public Signature getSignature()
-    {
-        return SIGNATURE;
     }
 
     @Override
@@ -68,17 +61,14 @@ public class IntersectionRSetFunction
     }
 
     @Override
-    public FunctionInfo specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
+    public ScalarFunctionImplementation specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
     {
         checkArgument(arity == 2, "Cardinality expects only two argument");
-        return new FunctionInfo(
-                SIGNATURE,
-                "Merges two sets and returns the cardinality of the final set",
-                isHidden(),
-                METHOD_HANDLE.bindTo(serde).bindTo(typeManager).bindTo(types.get("K")),
-                isDeterministic(),
+        return new ScalarFunctionImplementation(
                 false,
-                ImmutableList.of(false, false));
+                ImmutableList.of(false, false),
+                METHOD_HANDLE.bindTo(serde).bindTo(typeManager).bindTo(types.get("K")),
+                isDeterministic());
     }
 
     public static Slice intersection(BlockEncodingSerde serde, TypeManager typeManager, Type type, Slice set1, Slice set2)

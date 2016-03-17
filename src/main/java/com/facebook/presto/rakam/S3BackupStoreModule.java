@@ -20,7 +20,8 @@ import com.google.inject.Scopes;
 
 import static io.airlift.configuration.ConfigBinder.configBinder;
 
-public class S3BackupStoreModule implements Module
+public class S3BackupStoreModule
+        implements Module
 {
     @Override
     public void configure(Binder binder)

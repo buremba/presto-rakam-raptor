@@ -13,10 +13,9 @@
  */
 package com.facebook.presto.rakam.set;
 
-import com.facebook.presto.metadata.FunctionInfo;
 import com.facebook.presto.metadata.FunctionRegistry;
-import com.facebook.presto.metadata.ParametricFunction;
-import com.facebook.presto.metadata.Signature;
+import com.facebook.presto.metadata.SqlScalarFunction;
+import com.facebook.presto.operator.scalar.ScalarFunctionImplementation;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
@@ -26,26 +25,21 @@ import io.airlift.slice.Slice;
 import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
-import static com.facebook.presto.metadata.FunctionType.SCALAR;
 import static com.facebook.presto.metadata.Signature.typeParameter;
 import static com.facebook.presto.util.Reflection.methodHandle;
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class ComplementRHashSet implements ParametricFunction
+public class ComplementRHashSet
+        extends SqlScalarFunction
 {
-    private static final Signature SIGNATURE = new Signature("complement", SCALAR, ImmutableList.of(typeParameter("K")), "set<K>", ImmutableList.of("set<K>", "set<K>"), false);
+    private static final String FUNCTION_NAME = "complement";
     private static final MethodHandle METHOD_HANDLE = methodHandle(ComplementRHashSet.class, "getRelativeComplement", BlockEncodingSerde.class, TypeManager.class, Type.class, Slice.class, Slice.class);
     private final BlockEncodingSerde serde;
 
     public ComplementRHashSet(BlockEncodingSerde serde)
     {
+        super(FUNCTION_NAME, ImmutableList.of(typeParameter("K")), "set<K>", ImmutableList.of("set<K>", "set<K>"));
         this.serde = serde;
-    }
-
-    @Override
-    public Signature getSignature()
-    {
-        return SIGNATURE;
     }
 
     @Override
@@ -67,17 +61,14 @@ public class ComplementRHashSet implements ParametricFunction
     }
 
     @Override
-    public FunctionInfo specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
+    public ScalarFunctionImplementation specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
     {
         checkArgument(arity == 2, "complement expects only two argument");
-        return new FunctionInfo(
-                SIGNATURE,
-                "Subtracts sets and returns the cardinality",
-                isHidden(),
+        return new ScalarFunctionImplementation(
+                true,
+                ImmutableList.of(true, true),
                 METHOD_HANDLE.bindTo(serde).bindTo(typeManager).bindTo(types.get("K")),
-                isDeterministic(),
-                false,
-                ImmutableList.of(false, false));
+                isDeterministic());
     }
 
     public static Slice getRelativeComplement(BlockEncodingSerde serde, TypeManager typeManager, Type type, Slice set1, Slice set2)

@@ -22,7 +22,10 @@ import org.apache.http.HttpStatus;
 
 import javax.inject.Inject;
 
-public class S3BackupStore implements BackupStore
+import java.util.UUID;
+
+public class S3BackupStore
+        implements BackupStore
 {
     private final AmazonS3Client s3Client;
     private final S3BackupConfig config;
@@ -50,6 +53,12 @@ public class S3BackupStore implements BackupStore
         catch (InterruptedException e) {
             throw Throwables.propagate(e);
         }
+    }
+
+    @Override
+    public void deleteShard(UUID uuid)
+    {
+        s3Client.deleteObject(config.getS3Bucket(), uuid.toString());
     }
 
     @Override

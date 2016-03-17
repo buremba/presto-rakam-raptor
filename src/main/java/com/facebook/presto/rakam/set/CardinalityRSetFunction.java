@@ -13,11 +13,9 @@
  */
 package com.facebook.presto.rakam.set;
 
-import com.facebook.presto.metadata.FunctionInfo;
 import com.facebook.presto.metadata.FunctionRegistry;
-import com.facebook.presto.metadata.ParametricFunction;
-import com.facebook.presto.metadata.Signature;
-import com.facebook.presto.spi.type.StandardTypes;
+import com.facebook.presto.metadata.SqlScalarFunction;
+import com.facebook.presto.operator.scalar.ScalarFunctionImplementation;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.collect.ImmutableList;
@@ -26,24 +24,20 @@ import io.airlift.slice.Slice;
 import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
-import static com.facebook.presto.metadata.FunctionType.SCALAR;
 import static com.facebook.presto.metadata.Signature.typeParameter;
-import static com.facebook.presto.spi.type.TypeSignature.parseTypeSignature;
-import static com.facebook.presto.type.TypeUtils.parameterizedTypeName;
 import static com.facebook.presto.util.Reflection.methodHandle;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class CardinalityRSetFunction
-        implements ParametricFunction
+        extends SqlScalarFunction
 {
+    private static final String FUNCTION_NAME = "cardinality";
     public static final CardinalityRSetFunction SET_CARDINALITY = new CardinalityRSetFunction();
-    private static final Signature SIGNATURE = new Signature("cardinality", SCALAR, ImmutableList.of(typeParameter("K")), "bigint", ImmutableList.of("set<K>"), false);
     private static final MethodHandle METHOD_HANDLE = methodHandle(CardinalityRSetFunction.class, "mapCardinality", Slice.class);
 
-    @Override
-    public Signature getSignature()
+    public CardinalityRSetFunction()
     {
-        return SIGNATURE;
+        super(FUNCTION_NAME, ImmutableList.of(typeParameter("K")), "bigint", ImmutableList.of("set<K>"));
     }
 
     @Override
@@ -65,18 +59,14 @@ public class CardinalityRSetFunction
     }
 
     @Override
-    public FunctionInfo specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
+    public ScalarFunctionImplementation specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
     {
         checkArgument(arity == 1, "Cardinality expects only one argument");
-        Type keyType = types.get("K");
-        return new FunctionInfo(
-                new Signature("cardinality", SCALAR, parseTypeSignature(StandardTypes.BIGINT), parameterizedTypeName("set", keyType.getTypeSignature())),
-                "Returns the cardinality of the set",
-                isHidden(),
-                METHOD_HANDLE,
-                isDeterministic(),
+        return new ScalarFunctionImplementation(
                 false,
-                ImmutableList.of(false));
+                ImmutableList.of(false),
+                METHOD_HANDLE,
+                isDeterministic());
     }
 
     // We cannot use RHashSet.cardinality directly because it's in a interface so compiler will fail. (I assume that INVOKE_DYNAMIC doesn't work for interfaces)

@@ -24,7 +24,8 @@ import javax.sql.DataSource;
 
 import static io.airlift.configuration.ConfigBinder.configBinder;
 
-public class MysqlMetadataModule extends AbstractConfigurationAwareModule
+public class MysqlMetadataModule
+        extends AbstractConfigurationAwareModule
 {
     @Override
     protected void setup(Binder binder)

@@ -16,6 +16,7 @@ package com.facebook.presto.rakam.set;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
+import com.facebook.presto.spi.type.TypeParameter;
 import com.facebook.presto.type.ParametricType;
 
 import java.util.List;
@@ -41,10 +42,9 @@ public class RHashSetParametricType
     }
 
     @Override
-    public RHashSetType createType(List<Type> types, List<Object> literals)
+    public Type createType(List<TypeParameter> types)
     {
         checkArgument(types.size() == 1, "Expected only one type, got %s", types);
-        checkArgument(literals.isEmpty(), "Unexpected literals: %s", literals);
-        return new RHashSetType(serde, typeManager, types.get(0));
+        return new RHashSetType(serde, typeManager, types.get(0).getType());
     }
 }

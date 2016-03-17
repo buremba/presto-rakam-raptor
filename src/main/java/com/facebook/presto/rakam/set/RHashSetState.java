@@ -15,10 +15,10 @@ package com.facebook.presto.rakam.set;
 
 import com.facebook.presto.operator.aggregation.state.AccumulatorState;
 import com.facebook.presto.operator.aggregation.state.AccumulatorStateMetadata;
-import com.facebook.presto.operator.aggregation.state.HyperLogLogStateFactory;
 
-@AccumulatorStateMetadata(stateSerializerClass = RHashSetStateSerializer.class, stateFactoryClass = HyperLogLogStateFactory.class)
-public interface RHashSetState extends AccumulatorState
+@AccumulatorStateMetadata(stateSerializerClass = RHashSetStateSerializer.class, stateFactoryClass = RHashSetStateFactory.class)
+public interface RHashSetState
+        extends AccumulatorState
 {
     void set(RHashSet set);
 

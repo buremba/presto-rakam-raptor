@@ -13,11 +13,9 @@
  */
 package com.facebook.presto.rakam.set;
 
-import com.facebook.presto.byteCode.DynamicClassLoader;
-import com.facebook.presto.metadata.FunctionInfo;
+import com.facebook.presto.bytecode.DynamicClassLoader;
 import com.facebook.presto.metadata.FunctionRegistry;
-import com.facebook.presto.metadata.ParametricAggregation;
-import com.facebook.presto.metadata.Signature;
+import com.facebook.presto.metadata.SqlAggregationFunction;
 import com.facebook.presto.operator.aggregation.AccumulatorCompiler;
 import com.facebook.presto.operator.aggregation.AggregationMetadata;
 import com.facebook.presto.operator.aggregation.GenericAccumulatorFactoryBinder;
@@ -37,34 +35,26 @@ import java.lang.invoke.MethodHandle;
 import java.util.List;
 import java.util.Map;
 
-import static com.facebook.presto.metadata.FunctionType.AGGREGATE;
 import static com.facebook.presto.metadata.Signature.typeParameter;
 import static com.facebook.presto.operator.aggregation.AggregationMetadata.ParameterMetadata.ParameterType.BLOCK_INDEX;
 import static com.facebook.presto.operator.aggregation.AggregationMetadata.ParameterMetadata.ParameterType.BLOCK_INPUT_CHANNEL;
 import static com.facebook.presto.operator.aggregation.AggregationMetadata.ParameterMetadata.ParameterType.STATE;
 import static com.facebook.presto.operator.aggregation.AggregationUtils.generateAggregationName;
-import static com.facebook.presto.type.TypeUtils.parameterizedTypeName;
 import static com.facebook.presto.util.Reflection.methodHandle;
 
 public class MergeRSetAggregation
-        extends ParametricAggregation
+        extends SqlAggregationFunction
 {
     private static final String NAME = "merge_sets";
     private static final MethodHandle INPUT_FUNCTION = methodHandle(MergeRSetAggregation.class, "input", Type.class, TypeManager.class, BlockEncodingSerde.class, RHashSetState.class, Block.class, int.class);
     private static final MethodHandle COMBINE_FUNCTION = methodHandle(MergeRSetAggregation.class, "combine", RHashSetState.class, RHashSetState.class);
     private static final MethodHandle OUTPUT_FUNCTION = methodHandle(MergeRSetAggregation.class, "output", Type.class, BlockEncodingSerde.class, RHashSetState.class, BlockBuilder.class);
-    private static final Signature SIGNATURE = new Signature(NAME, AGGREGATE, ImmutableList.of(typeParameter("T")), "set<T>", ImmutableList.of("set<T>"), false);
     private final BlockEncodingSerde serde;
 
     public MergeRSetAggregation(BlockEncodingSerde serde)
     {
+        super(NAME, ImmutableList.of(typeParameter("T")), "set<T>", ImmutableList.of("set<T>"));
         this.serde = serde;
-    }
-
-    @Override
-    public Signature getSignature()
-    {
-        return SIGNATURE;
     }
 
     @Override
@@ -74,19 +64,10 @@ public class MergeRSetAggregation
     }
 
     @Override
-    public FunctionInfo specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
+    public InternalAggregationFunction specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
     {
         Type type = types.get("T");
-        Signature signature = new Signature(NAME,
-                AGGREGATE,
-                parameterizedTypeName("set", type.getTypeSignature()),
-                type.getTypeSignature());
-        InternalAggregationFunction aggregation = generateAggregation(typeManager, type);
-        return new FunctionInfo(signature, getDescription(), aggregation);
-    }
 
-    private InternalAggregationFunction generateAggregation(TypeManager typeManager, Type type)
-    {
         DynamicClassLoader classLoader = new DynamicClassLoader(RSetAggregationFunction.class.getClassLoader());
 
         AccumulatorStateSerializer<?> stateSerializer = new RHashSetStateSerializer(serde, typeManager, type);

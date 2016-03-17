@@ -15,6 +15,9 @@
 package com.facebook.presto.rakam;
 
 import com.facebook.presto.raptor.metadata.ForMetadata;
+import com.facebook.presto.raptor.metadata.H2ShardDao;
+import com.facebook.presto.raptor.metadata.MySqlShardDao;
+import com.facebook.presto.raptor.metadata.ShardDao;
 import com.google.inject.Binder;
 import com.google.inject.Provides;
 import io.airlift.configuration.AbstractConfigurationAwareModule;
@@ -26,6 +29,7 @@ import javax.sql.DataSource;
 
 import java.lang.annotation.Annotation;
 
+import static com.facebook.presto.raptor.metadata.DatabaseMetadataModule.bindDaoSupplier;
 import static com.facebook.presto.raptor.util.ConditionalModule.installIfPropertyEquals;
 
 public class RakamMetadataModule
@@ -48,7 +52,15 @@ public class RakamMetadataModule
     private void bindDataSource(String type, Class<? extends Annotation> annotation)
     {
         String property = type + ".db.type";
-        install(installIfPropertyEquals(new MysqlMetadataModule(), property, "mysql"));
-        install(installIfPropertyEquals(new H2EmbeddedDataSourceModule(type, annotation), property, "h2"));
+
+        install(installIfPropertyEquals(property, "mysql", binder -> {
+            binder.install(new MysqlMetadataModule());
+            bindDaoSupplier(binder, ShardDao.class, MySqlShardDao.class);
+        }));
+
+        install(installIfPropertyEquals(property, "h2", binder -> {
+            binder.install(new H2EmbeddedDataSourceModule(type, annotation));
+            bindDaoSupplier(binder, ShardDao.class, H2ShardDao.class);
+        }));
     }
 }
