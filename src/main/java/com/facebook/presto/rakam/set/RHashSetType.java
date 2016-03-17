@@ -13,7 +13,6 @@
  */
 package com.facebook.presto.rakam.set;
 
-import com.facebook.presto.hadoop.$internal.com.google.common.base.Throwables;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.BlockBuilder;
@@ -95,13 +94,7 @@ public class RHashSetType
             return null;
         }
 
-        RHashSet set;
-        try {
-            set = RHashSet.create(getElementType(), serde, typeManager, block.getSlice(position, 0, block.getLength(position)));
-        }
-        catch (Exception e) {
-            throw Throwables.propagate(e);
-        }
+        RHashSet set = RHashSet.create(getElementType(), serde, typeManager, block.getSlice(position, 0, block.getLength(position)));
 
         List<Object> values = new ArrayList<>(set.getDistinctCount());
 
