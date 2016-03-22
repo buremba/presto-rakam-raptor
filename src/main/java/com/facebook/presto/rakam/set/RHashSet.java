@@ -54,7 +54,7 @@ public interface RHashSet
     static RHashSet create(Type type)
     {
         if (type == BigintType.BIGINT) {
-            return new IntRHashSet();
+            return new BigintRHashSet(32);
         }
         else {
             return new BlockRHashSet(type, 32);
@@ -64,7 +64,7 @@ public interface RHashSet
     static RHashSet create(Type type, BlockEncodingSerde serde, TypeManager typeManager, Slice slice)
     {
         if (type == BigintType.BIGINT) {
-            return new IntRHashSet(slice);
+            return new BigintRHashSet(slice);
         }
         else {
             return new BlockRHashSet(serde, typeManager, slice);
@@ -79,5 +79,5 @@ public interface RHashSet
 
     void intersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet);
 
-    void merge(TypeManager typeManager, BlockEncodingSerde serde, RHashSet otherSet);
+    void merge(TypeManager typeManager, BlockEncodingSerde serde, RHashSet block);
 }

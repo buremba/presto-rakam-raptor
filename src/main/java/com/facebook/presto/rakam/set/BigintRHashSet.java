@@ -31,6 +31,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import static com.facebook.presto.spi.type.BigintType.BIGINT;
+import static com.facebook.presto.util.Types.checkType;
 import static com.google.common.base.Preconditions.checkArgument;
 
 public class BigintRHashSet
@@ -162,7 +163,8 @@ public class BigintRHashSet
     @Override
     public void merge(TypeManager typeManager, BlockEncodingSerde serde, RHashSet otherSet)
     {
-        throw new UnsupportedOperationException();
+        BigintRHashSet rHashSet = checkType(otherSet, BigintRHashSet.class, "");
+        this.set.addAll(rHashSet.getSet());
     }
 
     @Override

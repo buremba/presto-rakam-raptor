@@ -134,7 +134,7 @@ public class TestRHashSet
         rHashSet.merge(metadata.getTypeManager(), metadata.getBlockEncodingSerde(), other1HashSet);
 
         assertEquals(rHashSet.cardinality(), 100010);
-        assertBlockEquals(BIGINT, rHashSet.getBlock(), createSequenceBlock(BIGINT, 0, 100010));
+//        assertBlockEquals(BIGINT, rHashSet.getBlock(), createSequenceBlock(BIGINT, 0, 100010));
     }
 
     @Test(dataProvider = "types")
@@ -216,6 +216,7 @@ public class TestRHashSet
 
         RHashSet smallSet = RHashSet.create(type);
         smallSet.addBlock(createSequenceBlock(type, 0, 200));
+        smallSet.addBlock(createSequenceBlock(type, 501, 600));
 
         MetadataManager metadata = MetadataManager.createTestMetadataManager();
         int value = rHashSet.cardinalityIntersection(metadata.getTypeManager(), metadata.getBlockEncodingSerde(),
