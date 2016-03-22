@@ -70,8 +70,8 @@ public class CardinalityRSetFunction
     }
 
     // We cannot use RHashSet.cardinality directly because it's in a interface so compiler will fail. (I assume that INVOKE_DYNAMIC doesn't work for interfaces)
-    public static long mapCardinality(Slice block)
+    public static long mapCardinality(Slice slice)
     {
-        return RHashSet.cardinality(block);
+        return RHashSet.cardinality(slice);
     }
 }

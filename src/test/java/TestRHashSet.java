@@ -49,15 +49,15 @@ public class TestRHashSet
 
         rHashSet.addBlock(createSequenceBlock(type, 0, 50000));
 
-        assertEquals(rHashSet.getDistinctCount(), 50000);
+        assertEquals(rHashSet.cardinality(), 50000);
 
         rHashSet.addBlock(createSequenceBlock(type, 0, 50000));
 
-        assertEquals(rHashSet.getDistinctCount(), 50000);
+        assertEquals(rHashSet.cardinality(), 50000);
 
         rHashSet.addBlock(createSequenceBlock(type, 0, 100000));
 
-        assertEquals(rHashSet.getDistinctCount(), 100000);
+        assertEquals(rHashSet.cardinality(), 100000);
     }
 
     @Test(dataProvider = "types")
@@ -73,7 +73,7 @@ public class TestRHashSet
 
         RHashSet rHashSet1 = RHashSet.create(type, metadata.getBlockEncodingSerde(), metadata.getTypeManager(), serialize);
 
-        assertEquals(rHashSet1.getDistinctCount(), 50000);
+        assertEquals(rHashSet1.cardinality(), 50000);
     }
 
     @Test(dataProvider = "types")
@@ -113,6 +113,30 @@ public class TestRHashSet
         assertEquals(RHashSet.cardinality(serialize), 50000);
     }
 
+    @Test
+    public void testMergeSerialized()
+            throws Exception
+    {
+        RHashSet rHashSet = RHashSet.create(BIGINT);
+
+        rHashSet.addBlock(createSequenceBlock(BIGINT, 0, 50000));
+
+        MetadataManager metadata = MetadataManager.createTestMetadataManager();
+
+        RHashSet otherHashSet = RHashSet.create(BIGINT);
+        otherHashSet.addBlock(createSequenceBlock(BIGINT, 0, 100000));
+
+        rHashSet.merge(metadata.getTypeManager(), metadata.getBlockEncodingSerde(), otherHashSet);
+
+        RHashSet other1HashSet = RHashSet.create(BIGINT);
+        other1HashSet.addBlock(createSequenceBlock(BIGINT, 100000, 100010));
+
+        rHashSet.merge(metadata.getTypeManager(), metadata.getBlockEncodingSerde(), other1HashSet);
+
+        assertEquals(rHashSet.cardinality(), 100010);
+        assertBlockEquals(BIGINT, rHashSet.getBlock(), createSequenceBlock(BIGINT, 0, 100010));
+    }
+
     @Test(dataProvider = "types")
     public void testContains(Type type)
             throws Exception
@@ -148,7 +172,7 @@ public class TestRHashSet
         rHashSet.subtract(metadata.getTypeManager(), metadata.getBlockEncodingSerde(),
                 smallSet.serialize(metadata.getBlockEncodingSerde()));
 
-        assertEquals(rHashSet.getDistinctCount(), 300);
+        assertEquals(rHashSet.cardinality(), 300);
         for (int i = 0; i < 500; i++) {
             if (i >= 200) {
                 assertTrue(rHashSet.contains(i, sequenceBlock));
@@ -175,7 +199,7 @@ public class TestRHashSet
         rHashSet.intersection(metadata.getTypeManager(), metadata.getBlockEncodingSerde(),
                 smallSet.serialize(metadata.getBlockEncodingSerde()));
 
-        assertEquals(rHashSet.getDistinctCount(), 200);
+        assertEquals(rHashSet.cardinality(), 200);
         for (int i = 0; i < 200; i++) {
             assertTrue(rHashSet.contains(i, sequenceBlock));
         }
@@ -252,5 +276,23 @@ public class TestRHashSet
         }
 
         return builder.build();
+    }
+
+    public static Block createLongsBlock(int... values)
+    {
+        BlockBuilder builder = BIGINT.createBlockBuilder(new BlockBuilderStatus(), 100);
+
+        for (int value : values) {
+            BIGINT.writeLong(builder, (long) value);
+        }
+
+        return builder.build();
+    }
+
+    public static void assertBlockEquals(Type type, Block actual, Block expected)
+    {
+        for (int position = 0; position < actual.getPositionCount(); position++) {
+            assertEquals(type.getObjectValue(SESSION, actual, position), type.getObjectValue(SESSION, expected, position));
+        }
     }
 }

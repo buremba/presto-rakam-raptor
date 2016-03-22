@@ -88,7 +88,7 @@ public class BigintRHashSet
     }
 
     @Override
-    public int getDistinctCount()
+    public int cardinality()
     {
         return set.size();
     }
@@ -123,7 +123,7 @@ public class BigintRHashSet
     public int cardinalitySubtract(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSlice)
     {
         LongIterator iterator = new BigintRHashSet(otherSlice).getSet().iterator();
-        int cardinality = getDistinctCount();
+        int cardinality = cardinality();
         while (iterator.hasNext()) {
             if (set.contains(iterator.nextLong())) {
                 cardinality--;
@@ -157,6 +157,12 @@ public class BigintRHashSet
         if (!rHashSet.nullExists) {
             nullExists = false;
         }
+    }
+
+    @Override
+    public void merge(TypeManager typeManager, BlockEncodingSerde serde, RHashSet otherSet)
+    {
+        throw new UnsupportedOperationException();
     }
 
     @Override

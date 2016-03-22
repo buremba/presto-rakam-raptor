@@ -32,7 +32,7 @@ public interface RHashSet
 
     void addBlock(Block page);
 
-    int getDistinctCount();
+    int cardinality();
 
     Block getBlock();
 
@@ -54,7 +54,7 @@ public interface RHashSet
     static RHashSet create(Type type)
     {
         if (type == BigintType.BIGINT) {
-            return new BigintRHashSet(32);
+            return new IntRHashSet();
         }
         else {
             return new BlockRHashSet(type, 32);
@@ -64,7 +64,7 @@ public interface RHashSet
     static RHashSet create(Type type, BlockEncodingSerde serde, TypeManager typeManager, Slice slice)
     {
         if (type == BigintType.BIGINT) {
-            return new BigintRHashSet(slice);
+            return new IntRHashSet(slice);
         }
         else {
             return new BlockRHashSet(serde, typeManager, slice);
@@ -78,4 +78,6 @@ public interface RHashSet
     void subtract(TypeManager typeManager, BlockEncodingSerde serde, Slice set);
 
     void intersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet);
+
+    void merge(TypeManager typeManager, BlockEncodingSerde serde, RHashSet otherSet);
 }

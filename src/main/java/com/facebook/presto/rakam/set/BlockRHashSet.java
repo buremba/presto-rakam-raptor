@@ -292,7 +292,7 @@ public class BlockRHashSet
     }
 
     @Override
-    public int getDistinctCount()
+    public int cardinality()
     {
         return nextGroupId;
     }
@@ -320,7 +320,7 @@ public class BlockRHashSet
     public int cardinalitySubtract(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
     {
         Block otherItems = RHashSet.getBlock(type, typeManager, serde, otherSet);
-        int cardinality = getDistinctCount();
+        int cardinality = cardinality();
         for (int i = 0; i < otherItems.getPositionCount(); i++) {
             if (contains(i, otherItems)) {
                 cardinality--;
@@ -335,7 +335,7 @@ public class BlockRHashSet
         BlockRHashSet newSet = new BlockRHashSet(type, 32);
 
         RHashSet otherItems = RHashSet.create(type, serde, typeManager, otherSet);
-        for (int i = 0; i < getDistinctCount(); i++) {
+        for (int i = 0; i < cardinality(); i++) {
             if (!otherItems.contains(i, currentBlockBuilder)) {
                 newSet.putIfAbsent(i, currentBlockBuilder);
             }
@@ -366,5 +366,11 @@ public class BlockRHashSet
         groupAddressByHash = newSet.groupAddressByHash;
         mask = newSet.mask;
         maxFill = newSet.maxFill;
+    }
+
+    @Override
+    public void merge(TypeManager typeManager, BlockEncodingSerde serde, RHashSet otherSet)
+    {
+        throw new UnsupportedOperationException();
     }
 }
