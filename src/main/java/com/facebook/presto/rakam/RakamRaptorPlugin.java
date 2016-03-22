@@ -17,8 +17,6 @@ package com.facebook.presto.rakam;
 import com.facebook.presto.metadata.FunctionFactory;
 import com.facebook.presto.rakam.set.RHashSetParametricType;
 import com.facebook.presto.raptor.RaptorPlugin;
-import com.facebook.presto.spi.NodeManager;
-import com.facebook.presto.spi.PageSorter;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.TypeManager;
 import com.facebook.presto.type.ParametricType;
@@ -28,7 +26,6 @@ import com.google.common.collect.ImmutableMap;
 import javax.inject.Inject;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
@@ -38,9 +35,9 @@ public class RakamRaptorPlugin
 {
     private TypeManager typeManager;
     private BlockEncodingSerde serde;
-    private PageSorter pageSorter;
-    private NodeManager nodeManager;
-    private ImmutableMap<String, String> optionalConfig;
+//    private PageSorter pageSorter;
+//    private NodeManager nodeManager;
+//    private ImmutableMap<String, String> optionalConfig;
 
     public RakamRaptorPlugin()
     {
@@ -50,7 +47,6 @@ public class RakamRaptorPlugin
     @Override
     public <T> List<T> getServices(Class<T> type)
     {
-        checkState(nodeManager != null, "NodeManager has not been set");
         checkState(serde != null, "BlockEncodingSerde has not been set");
         checkState(typeManager != null, "TypeManager has not been set");
 
@@ -90,21 +86,21 @@ public class RakamRaptorPlugin
         this.serde = requireNonNull(serde, "serde is null");
     }
 
-    @Inject
-    public void setNodeManager(NodeManager nodeManager)
-    {
-        this.nodeManager = nodeManager;
-    }
-
-    @Inject
-    public void setPageSorter(PageSorter pageSorter)
-    {
-        this.pageSorter = pageSorter;
-    }
-
-    @Override
-    public void setOptionalConfig(Map<String, String> optionalConfig)
-    {
-        this.optionalConfig = ImmutableMap.copyOf(requireNonNull(optionalConfig, "optionalConfig is null"));
-    }
+//    @Inject
+//    public void setNodeManager(NodeManager nodeManager)
+//    {
+//        this.nodeManager = nodeManager;
+//    }
+//
+//    @Inject
+//    public void setPageSorter(PageSorter pageSorter)
+//    {
+//        this.pageSorter = pageSorter;
+//    }
+//
+//    @Override
+//    public void setOptionalConfig(Map<String, String> optionalConfig)
+//    {
+//        this.optionalConfig = ImmutableMap.copyOf(requireNonNull(optionalConfig, "optionalConfig is null"));
+//    }
 }

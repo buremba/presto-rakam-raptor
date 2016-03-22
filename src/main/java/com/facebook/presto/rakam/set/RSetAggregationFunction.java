@@ -46,7 +46,7 @@ public class RSetAggregationFunction
 {
     private static final String NAME = "set";
     private static final MethodHandle INPUT_FUNCTION = methodHandle(RSetAggregationFunction.class, "input", Type.class, RHashSetState.class, Block.class, int.class);
-    private static final MethodHandle COMBINE_FUNCTION = methodHandle(RSetAggregationFunction.class, "combine", RHashSetState.class, RHashSetState.class);
+    private static final MethodHandle COMBINE_FUNCTION = methodHandle(RSetAggregationFunction.class, "combine", TypeManager.class, BlockEncodingSerde.class, RHashSetState.class, RHashSetState.class);
     private static final MethodHandle OUTPUT_FUNCTION = methodHandle(RSetAggregationFunction.class, "output", Type.class, BlockEncodingSerde.class, RHashSetState.class, BlockBuilder.class);
     private final BlockEncodingSerde serde;
 
@@ -78,7 +78,7 @@ public class RSetAggregationFunction
         List<AggregationMetadata.ParameterMetadata> inputParameterMetadata = createInputParameterMetadata(type);
 
         MethodHandle inputFunction = INPUT_FUNCTION.bindTo(type);
-        MethodHandle combineFunction = COMBINE_FUNCTION;
+        MethodHandle combineFunction = COMBINE_FUNCTION.bindTo(typeManager).bindTo(serde);
         MethodHandle outputFunction = OUTPUT_FUNCTION.bindTo(outputType).bindTo(serde);
         Class<? extends AccumulatorState> stateInterface = RHashSetState.class;
 
