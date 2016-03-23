@@ -120,7 +120,7 @@ public class MergeRSetAggregation
         }
 
         Slice slice = value.getSlice(position, 0, value.getLength(position));
-        Block items = BlockRHashSet.getBlock(typeManager, serde, slice);
+        Block items = RHashSet.getBlock(type, typeManager, serde, slice);
 
         set.addBlock(items);
         state.addMemoryUsage(set.getEstimatedSize() - startSize);
