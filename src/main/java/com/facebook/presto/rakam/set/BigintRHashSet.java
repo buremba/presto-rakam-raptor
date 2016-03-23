@@ -146,14 +146,7 @@ public class BigintRHashSet
     public void intersection(TypeManager typeManager, BlockEncodingSerde serde, Slice otherSet)
     {
         BigintRHashSet rHashSet = new BigintRHashSet(otherSet);
-        LongIterator iterator = set.iterator();
-        while (iterator.hasNext()) {
-            long value = iterator.nextLong();
-
-            if (!rHashSet.set.contains(value)) {
-                set.remove(value);
-            }
-        }
+        set.retainAll(rHashSet.set);
 
         if (!rHashSet.nullExists) {
             nullExists = false;
@@ -165,6 +158,10 @@ public class BigintRHashSet
     {
         BigintRHashSet rHashSet = checkType(otherSet, BigintRHashSet.class, "");
         this.set.addAll(rHashSet.getSet());
+
+        if (rHashSet.nullExists) {
+            nullExists = true;
+        }
     }
 
     @Override
