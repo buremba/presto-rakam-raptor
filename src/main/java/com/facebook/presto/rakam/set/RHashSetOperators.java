@@ -13,31 +13,63 @@
  */
 package com.facebook.presto.rakam.set;
 
-import com.facebook.presto.operator.scalar.ScalarOperator;
+import com.facebook.presto.metadata.FunctionRegistry;
+import com.facebook.presto.metadata.OperatorType;
+import com.facebook.presto.metadata.SqlOperator;
+import com.facebook.presto.operator.scalar.ScalarFunctionImplementation;
 import com.facebook.presto.spi.type.StandardTypes;
-import com.facebook.presto.type.SqlType;
+import com.facebook.presto.spi.type.Type;
+import com.facebook.presto.spi.type.TypeManager;
+import com.google.common.collect.ImmutableList;
 import io.airlift.slice.Slice;
 
-import static com.facebook.presto.metadata.OperatorType.CAST;
-import static com.facebook.presto.rakam.set.RHashSetType.R_HASH_SET_NAME;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.util.Map;
+
+import static com.facebook.presto.metadata.Signature.typeParameter;
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class RHashSetOperators
 {
+    public static final CastSetToVarbinary CAST_SET_TO_VARBINARY = new CastSetToVarbinary();
+    public static final CastVarbinaryToSet CAST_VARBINARY_TO_SET = new CastVarbinaryToSet();
+
+    public static class CastSetToVarbinary
+            extends SqlOperator
+    {
+        protected CastSetToVarbinary()
+        {
+            super(OperatorType.CAST, ImmutableList.of(typeParameter("T")), StandardTypes.VARBINARY, ImmutableList.of("set<T>"));
+        }
+
+        @Override
+        public ScalarFunctionImplementation specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
+        {
+            checkArgument(types.size() == 1, "Expected only one type");
+            MethodHandle identity = MethodHandles.identity(Slice.class);
+            return new ScalarFunctionImplementation(true, ImmutableList.of(true), identity, true);
+        }
+    }
+
+    public static class CastVarbinaryToSet
+            extends SqlOperator
+    {
+        protected CastVarbinaryToSet()
+        {
+            super(OperatorType.CAST, ImmutableList.of(typeParameter("T")), "set<T>", ImmutableList.of(StandardTypes.VARBINARY));
+        }
+
+        @Override
+        public ScalarFunctionImplementation specialize(Map<String, Type> types, int arity, TypeManager typeManager, FunctionRegistry functionRegistry)
+        {
+            checkArgument(types.size() == 1, "Expected only one type");
+            MethodHandle identity = MethodHandles.identity(Slice.class);
+            return new ScalarFunctionImplementation(true, ImmutableList.of(true), identity, true);
+        }
+    }
+
     private RHashSetOperators()
     {
-    }
-
-    @ScalarOperator(CAST)
-    @SqlType(StandardTypes.VARBINARY)
-    public static Slice castToBinary(@SqlType(R_HASH_SET_NAME + "<bigint>") Slice slice)
-    {
-        return slice;
-    }
-
-    @ScalarOperator(CAST)
-    @SqlType(R_HASH_SET_NAME + "<bigint>")
-    public static Slice castFromVarbinary(@SqlType(StandardTypes.VARBINARY) Slice slice)
-    {
-        return slice;
     }
 }

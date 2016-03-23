@@ -21,7 +21,6 @@ import com.facebook.presto.metadata.SqlScalarFunction;
 import com.facebook.presto.operator.scalar.ScalarFunctionImplementation;
 import com.facebook.presto.rakam.set.CardinalityIntersectionRSetFunction;
 import com.facebook.presto.rakam.set.CardinalityRSetFunction;
-import com.facebook.presto.rakam.set.CastSetToVarbinaryFunction;
 import com.facebook.presto.rakam.set.ComplementRHashSet;
 import com.facebook.presto.rakam.set.IntersectionRSetFunction;
 import com.facebook.presto.rakam.set.MergeRSetAggregation;
@@ -65,14 +64,14 @@ public class RakamFunctionFactory
         return new FunctionListBuilder(typeManager)
                 .function(ArraySumFunction.ARRAY_SUM_AGGREGATION)
                 .function(new RSetAggregationFunction(serde))
-                .function(CastSetToVarbinaryFunction.CAST_OPERATOR)
+                .function(RHashSetOperators.CAST_SET_TO_VARBINARY)
+                .function(RHashSetOperators.CAST_VARBINARY_TO_SET)
                 .function(CardinalityRSetFunction.SET_CARDINALITY)
                 .function(new MergeRSetAggregation(serde))
                 .function(new RelativeComplementRHashSet(serde))
                 .function(new ComplementRHashSet(serde))
                 .function(new IntersectionRSetFunction(serde))
                 .function(new CardinalityIntersectionRSetFunction(serde))
-                .scalar(RHashSetOperators.class)
                 .getFunctions();
     }
 
