@@ -35,6 +35,7 @@ import java.util.Arrays;
 import static com.facebook.presto.operator.SyntheticAddress.decodePosition;
 import static com.facebook.presto.operator.SyntheticAddress.encodeSyntheticAddress;
 import static com.facebook.presto.operator.scalar.CombineHashFunction.getHash;
+import static com.facebook.presto.util.Types.checkType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.airlift.slice.SizeOf.sizeOf;
 import static it.unimi.dsi.fastutil.HashCommon.arraySize;
@@ -371,6 +372,6 @@ public class BlockRHashSet
     @Override
     public void merge(TypeManager typeManager, BlockEncodingSerde serde, RHashSet otherSet)
     {
-        throw new UnsupportedOperationException();
+        addBlock(checkType(otherSet, BlockRHashSet.class, "").getBlock());
     }
 }
