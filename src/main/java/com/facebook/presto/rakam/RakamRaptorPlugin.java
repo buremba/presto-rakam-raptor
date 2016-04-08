@@ -35,10 +35,10 @@ public class RakamRaptorPlugin
 {
     private TypeManager typeManager;
     private BlockEncodingSerde serde;
-//    private PageSorter pageSorter;
 //    private NodeManager nodeManager;
+//    private PageSorter pageSorter;
 //    private ImmutableMap<String, String> optionalConfig;
-
+//
     public RakamRaptorPlugin()
     {
         super("rakam_raptor", new RakamMetadataModule(), ImmutableMap.of("s3", new S3BackupStoreModule()));
@@ -57,6 +57,7 @@ public class RakamRaptorPlugin
             return ImmutableList.of(type.cast(new RHashSetParametricType(serde, typeManager)));
         }
 
+        return super.getServices(type);
 //        if (type == ConnectorFactory.class) {
 //            return ImmutableList.of(type.cast(new RakamRaptorConnectorFactory(
 //                    "rakam_raptor",
@@ -69,7 +70,6 @@ public class RakamRaptorPlugin
 //                    typeManager)));
 //        }
 //        return ImmutableList.of();
-        return super.getServices(type);
     }
 
     @Inject
