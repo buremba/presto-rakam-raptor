@@ -12,10 +12,10 @@
     <artifactId>presto-rakam-raptor</artifactId>
     <description>Presto - Kafka Connector for Rakam</description>
     <packaging>presto-plugin</packaging>
+    <version>0.142.1-SNAPSHOT</version>
 
     <properties>
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
-        <rakam.version>0.2-SNAPSHOT</rakam.version>
     </properties>
 
     <dependencies>
