@@ -27,6 +27,7 @@ public class S3BackupConfig
     private String secretAccessKey;
     private String s3Bucket;
     private String region;
+    private String endpoint;
 
     @Config("aws.access-key")
     public S3BackupConfig setAccessKey(String accessKey)
@@ -79,6 +80,18 @@ public class S3BackupConfig
     public String getSecretAccessKey()
     {
         return secretAccessKey;
+    }
+
+    @Config("aws.s3-endpoint")
+    public S3BackupConfig setEndpoint(String endpoint)
+    {
+        this.endpoint = endpoint;
+        return this;
+    }
+
+    public String getEndpoint()
+    {
+        return endpoint;
     }
 
     public AWSCredentialsProvider getCredentials()
