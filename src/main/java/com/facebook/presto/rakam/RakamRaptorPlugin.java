@@ -14,13 +14,9 @@
 
 package com.facebook.presto.rakam;
 
-import com.facebook.presto.metadata.FunctionFactory;
-import com.facebook.presto.rakam.set.RHashSetParametricType;
 import com.facebook.presto.raptor.RaptorPlugin;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.type.TypeManager;
-import com.facebook.presto.type.ParametricType;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import javax.inject.Inject;
@@ -49,13 +45,6 @@ public class RakamRaptorPlugin
     {
         checkState(serde != null, "BlockEncodingSerde has not been set");
         checkState(typeManager != null, "TypeManager has not been set");
-
-        if (type == FunctionFactory.class) {
-            return ImmutableList.of(type.cast(new RakamFunctionFactory(typeManager, serde)));
-        }
-        else if (type == ParametricType.class) {
-            return ImmutableList.of(type.cast(new RHashSetParametricType(serde, typeManager)));
-        }
 
         return super.getServices(type);
 //        if (type == ConnectorFactory.class) {

@@ -21,6 +21,8 @@ import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import io.airlift.configuration.Config;
 
+import static com.amazonaws.regions.Regions.DEFAULT_REGION;
+
 public class S3BackupConfig
 {
     private String accessKey;
@@ -50,7 +52,7 @@ public class S3BackupConfig
 
     public Region getAWSRegion()
     {
-        return Region.getRegion(region == null ? Regions.DEFAULT_REGION : Regions.fromName(region));
+        return Region.getRegion(region == null ? DEFAULT_REGION : Regions.fromName(region));
     }
 
     @Config("aws.region")

@@ -35,7 +35,7 @@ public class S3BackupStore
     {
         this.config = config;
         s3Client = new AmazonS3Client(config.getCredentials());
-        if(config.getEndpoint() != null) {
+        if (config.getEndpoint() != null) {
             s3Client.setEndpoint(config.getEndpoint());
         }
         s3Client.setRegion(config.getAWSRegion());
