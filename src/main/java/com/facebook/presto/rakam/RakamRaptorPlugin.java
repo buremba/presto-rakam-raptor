@@ -15,13 +15,18 @@
 package com.facebook.presto.rakam;
 
 import com.facebook.presto.raptor.RaptorPlugin;
+import com.facebook.presto.spi.NodeManager;
+import com.facebook.presto.spi.PageSorter;
 import com.facebook.presto.spi.block.BlockEncodingSerde;
+import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.facebook.presto.spi.type.TypeManager;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import javax.inject.Inject;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
@@ -31,10 +36,11 @@ public class RakamRaptorPlugin
 {
     private TypeManager typeManager;
     private BlockEncodingSerde serde;
-//    private NodeManager nodeManager;
-//    private PageSorter pageSorter;
-//    private ImmutableMap<String, String> optionalConfig;
-//
+
+    private NodeManager nodeManager;
+    private PageSorter pageSorter;
+    private ImmutableMap<String, String> optionalConfig;
+
     public RakamRaptorPlugin()
     {
         super("rakam_raptor", new RakamMetadataModule(), ImmutableMap.of("s3", new S3BackupStoreModule()));
@@ -46,19 +52,18 @@ public class RakamRaptorPlugin
         checkState(serde != null, "BlockEncodingSerde has not been set");
         checkState(typeManager != null, "TypeManager has not been set");
 
-        return super.getServices(type);
-//        if (type == ConnectorFactory.class) {
-//            return ImmutableList.of(type.cast(new RakamRaptorConnectorFactory(
-//                    "rakam_raptor",
-//                    new RakamMetadataModule(),
-//                    ImmutableMap.of("s3", new S3BackupStoreModule()),
-//                    optionalConfig,
-//                    nodeManager,
-//                    pageSorter,
-//                    serde,
-//                    typeManager)));
-//        }
-//        return ImmutableList.of();
+        if (type == ConnectorFactory.class) {
+            return ImmutableList.of(type.cast(new RakamRaptorConnectorFactory(
+                    "rakam_raptor",
+                    new RakamMetadataModule(),
+                    ImmutableMap.of("s3", new S3BackupStoreModule()),
+                    optionalConfig,
+                    nodeManager,
+                    pageSorter,
+                    serde,
+                    typeManager)));
+        }
+        return ImmutableList.of();
     }
 
     @Inject
@@ -75,21 +80,24 @@ public class RakamRaptorPlugin
         this.serde = requireNonNull(serde, "serde is null");
     }
 
-//    @Inject
-//    public void setNodeManager(NodeManager nodeManager)
-//    {
-//        this.nodeManager = nodeManager;
-//    }
-//
-//    @Inject
-//    public void setPageSorter(PageSorter pageSorter)
-//    {
-//        this.pageSorter = pageSorter;
-//    }
-//
-//    @Override
-//    public void setOptionalConfig(Map<String, String> optionalConfig)
-//    {
-//        this.optionalConfig = ImmutableMap.copyOf(requireNonNull(optionalConfig, "optionalConfig is null"));
-//    }
+    @Inject
+    public void setNodeManager(NodeManager nodeManager)
+    {
+        this.nodeManager = nodeManager;
+        super.setNodeManager(nodeManager);
+    }
+
+    @Inject
+    public void setPageSorter(PageSorter pageSorter)
+    {
+        this.pageSorter = pageSorter;
+        super.setPageSorter(pageSorter);
+    }
+
+    @Override
+    public void setOptionalConfig(Map<String, String> optionalConfig)
+    {
+        this.optionalConfig = ImmutableMap.copyOf(requireNonNull(optionalConfig, "optionalConfig is null"));
+        super.setOptionalConfig(optionalConfig);
+    }
 }

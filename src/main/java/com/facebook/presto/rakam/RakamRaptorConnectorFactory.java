@@ -18,6 +18,7 @@ import com.facebook.presto.raptor.RaptorConnector;
 import com.facebook.presto.raptor.RaptorHandleResolver;
 import com.facebook.presto.raptor.RaptorMetadataFactory;
 import com.facebook.presto.raptor.RaptorModule;
+import com.facebook.presto.raptor.RaptorPageSinkProvider;
 import com.facebook.presto.raptor.backup.BackupModule;
 import com.facebook.presto.raptor.storage.StorageModule;
 import com.facebook.presto.raptor.util.CurrentNodeId;
@@ -37,6 +38,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.airlift.bootstrap.Bootstrap;
+import io.airlift.configuration.AbstractConfigurationAwareModule;
 import io.airlift.json.JsonModule;
 import org.weakref.jmx.guice.MBeanModule;
 
@@ -114,11 +116,21 @@ public class RakamRaptorConnectorFactory
                     },
                     metadataModule,
                     new BackupModule(backupProviders),
-                    new StorageModule(connectorId),
-                    Modules.override(new RaptorModule(connectorId)).with(new Module() {
+                    Modules.override(new StorageModule(connectorId)).with(new AbstractConfigurationAwareModule()
+                    {
+                        @Override
+                        protected void setup(Binder binder)
+                        {
+//                            binder.bind(ShardCompactionManager.class).to(DelegateShardCompactionManager.class).in(Scopes.SINGLETON);
+//                            binder.bind(ProxyShardCompactor.class).in(Scopes.SINGLETON);
+                        }
+                    }),
+                    Modules.override(new RaptorModule(connectorId)).with(new Module()
+                    {
                         @Override
                         public void configure(Binder binder)
                         {
+                            binder.bind(RaptorPageSinkProvider.class).to(DelegateRaptorSinkProvider.class).in(Scopes.SINGLETON);
                             binder.bind(RaptorMetadataFactory.class).to(DelegateRaptorMetadataFactory.class).in(Scopes.SINGLETON);
                         }
                     }));
