@@ -81,9 +81,24 @@ public class DelegateRaptorMetadata
 
         ImmutableList.Builder<ColumnMetadata> builder = ImmutableList.<ColumnMetadata>builder();
 
-        tableMetadata.getColumns().stream()
-                .filter(columnMetadata -> !columnMetadata.getName().equals(SHARD_TIME_COLUMN_NAME))
-                .forEach(builder::add);
+        boolean found = false;
+        for (ColumnMetadata columnMetadata : tableMetadata.getColumns()) {
+            if(!found && columnMetadata.getName().equals(SHARD_TIME_COLUMN_NAME)) {
+                found = true;
+                continue;
+            }
+
+            builder.add(columnMetadata);
+        }
+
+        if(!found) {
+            try {
+                addColumn(session, tableHandle, SHARD_TIME_COLUMN);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         builder.add(SHARD_TIME_COLUMN);
 
