@@ -59,7 +59,7 @@ import static java.util.Objects.requireNonNull;
 public class DelegateRaptorMetadata
         extends RaptorMetadata
 {
-    public static final String SHARD_TIME_COLUMN_NAME = "$shard_time";
+    public static final String SHARD_TIME_COLUMN_NAME = "_shard_time";
     public static final ColumnMetadata SHARD_TIME_COLUMN = new ColumnMetadata(SHARD_TIME_COLUMN_NAME, TIMESTAMP, null, true);
     private final String connectorId;
     private final MetadataDao dao;
@@ -79,34 +79,27 @@ public class DelegateRaptorMetadata
     {
         ConnectorTableMetadata tableMetadata = super.getTableMetadata(session, tableHandle);
 
-        ImmutableList.Builder<ColumnMetadata> builder = ImmutableList.<ColumnMetadata>builder();
+        if (!tableMetadata.getColumns().stream().anyMatch(e -> e.getName().equals(SHARD_TIME_COLUMN_NAME))) {
+            ImmutableList.Builder<ColumnMetadata> builder = ImmutableList.<ColumnMetadata>builder();
+            builder.addAll(tableMetadata.getColumns());
 
-        boolean found = false;
-        for (ColumnMetadata columnMetadata : tableMetadata.getColumns()) {
-            if(!found && columnMetadata.getName().equals(SHARD_TIME_COLUMN_NAME)) {
-                found = true;
-                continue;
-            }
-
-            builder.add(columnMetadata);
-        }
-
-        if(!found) {
             try {
                 addColumn(session, tableHandle, SHARD_TIME_COLUMN);
             }
             catch (Exception e) {
                 e.printStackTrace();
             }
+
+            builder.add(SHARD_TIME_COLUMN);
+
+            return new ConnectorTableMetadata(tableMetadata.getTable(),
+                    builder.build(),
+                    tableMetadata.getProperties(),
+                    tableMetadata.getOwner(),
+                    tableMetadata.isSampled());
         }
 
-        builder.add(SHARD_TIME_COLUMN);
-
-        return new ConnectorTableMetadata(tableMetadata.getTable(),
-                builder.build(),
-                tableMetadata.getProperties(),
-                tableMetadata.getOwner(),
-                tableMetadata.isSampled());
+        return  tableMetadata;
     }
 
     @Override
