@@ -79,27 +79,33 @@ public class DelegateRaptorMetadata
     {
         ConnectorTableMetadata tableMetadata = super.getTableMetadata(session, tableHandle);
 
-        if (!tableMetadata.getColumns().stream().anyMatch(e -> e.getName().equals(SHARD_TIME_COLUMN_NAME))) {
-            ImmutableList.Builder<ColumnMetadata> builder = ImmutableList.<ColumnMetadata>builder();
-            builder.addAll(tableMetadata.getColumns());
+        ImmutableList.Builder<ColumnMetadata> builder = ImmutableList.<ColumnMetadata>builder();
 
+        boolean exists = false;
+        for (ColumnMetadata column : tableMetadata.getColumns()) {
+            if(column.getName().equals(SHARD_TIME_COLUMN_NAME)) {
+                builder.add(SHARD_TIME_COLUMN);
+                exists = true;
+            } else {
+                builder.add(column);
+            }
+        }
+
+        if(!exists) {
             try {
                 addColumn(session, tableHandle, SHARD_TIME_COLUMN);
             }
             catch (Exception e) {
                 e.printStackTrace();
             }
-
             builder.add(SHARD_TIME_COLUMN);
-
-            return new ConnectorTableMetadata(tableMetadata.getTable(),
-                    builder.build(),
-                    tableMetadata.getProperties(),
-                    tableMetadata.getOwner(),
-                    tableMetadata.isSampled());
         }
 
-        return  tableMetadata;
+        return new ConnectorTableMetadata(tableMetadata.getTable(),
+                builder.build(),
+                tableMetadata.getProperties(),
+                tableMetadata.getOwner(),
+                tableMetadata.isSampled());
     }
 
     @Override
