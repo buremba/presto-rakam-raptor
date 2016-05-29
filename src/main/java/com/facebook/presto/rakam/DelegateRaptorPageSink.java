@@ -22,7 +22,6 @@ import com.facebook.presto.spi.block.Block;
 import com.facebook.presto.spi.block.RunLengthEncodedBlock;
 import com.facebook.presto.spi.block.SortOrder;
 import com.facebook.presto.spi.type.Type;
-import com.google.common.primitives.Ints;
 import io.airlift.json.JsonCodec;
 import io.airlift.units.DataSize;
 import org.skife.jdbi.v2.DBI;
@@ -42,11 +41,11 @@ public class DelegateRaptorPageSink
     private final int shardTimeColumnIndex;
     private final List<Long> columnIdx;
 
-    public DelegateRaptorPageSink(DBI dbi, PageSorter pageSorter, StorageManager storageManager, JsonCodec<ShardInfo> shardInfoCodec, long transactionId, List<Long> columnIds, List<Type> columnTypes, Optional<Long> sampleWeightColumnId, List<Long> sortColumnIds, List<SortOrder> sortOrders, OptionalInt bucketCount, List<Long> bucketColumnIds, DataSize maxBufferSize, long shardTimeColumnIndex)
+    public DelegateRaptorPageSink(DBI dbi, PageSorter pageSorter, StorageManager storageManager, JsonCodec<ShardInfo> shardInfoCodec, long transactionId, List<Long> columnIds, List<Type> columnTypes, Optional<Long> sampleWeightColumnId, List<Long> sortColumnIds, List<SortOrder> sortOrders, OptionalInt bucketCount, List<Long> bucketColumnIds, DataSize maxBufferSize, int shardTimeColumnIndex)
     {
         super(pageSorter, storageManager, shardInfoCodec, transactionId, columnIds, columnTypes, sampleWeightColumnId, sortColumnIds, sortOrders, bucketCount, bucketColumnIds, maxBufferSize);
         epochMilli = dbi.open().createQuery("SELECT CURRENT_TIMESTAMP").map(TimestampMapper.FIRST).first().toInstant().toEpochMilli();
-        this.shardTimeColumnIndex = Ints.checkedCast(shardTimeColumnIndex) - 1;
+        this.shardTimeColumnIndex = shardTimeColumnIndex;
         this.columnIdx = columnIds;
     }
 
@@ -58,8 +57,7 @@ public class DelegateRaptorPageSink
         Block[] blocks;
 
         if (columnIdx.size() - 1 == page.getChannelCount()) {
-            int totalChannels = page.getChannelCount() + 1;
-            blocks = new Block[totalChannels];
+            blocks = new Block[columnIdx.size()];
             System.arraycopy(page.getBlocks(), 0, blocks, 0, shardTimeColumnIndex);
             System.arraycopy(page.getBlocks(), shardTimeColumnIndex, blocks, shardTimeColumnIndex + 1, page.getChannelCount() - shardTimeColumnIndex);
         }

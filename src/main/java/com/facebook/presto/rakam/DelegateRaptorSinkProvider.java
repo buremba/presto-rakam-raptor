@@ -36,6 +36,7 @@ import javax.inject.Inject;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static com.facebook.presto.raptor.util.Types.checkType;
 import static java.util.Objects.requireNonNull;
@@ -109,13 +110,13 @@ public class DelegateRaptorSinkProvider
         return columnHandles.stream().map(RaptorColumnHandle::getColumnId).collect(toList());
     }
 
-    private static long getShardTimeColumnIndex(List<RaptorColumnHandle> columnHandles)
+    private static int getShardTimeColumnIndex(List<RaptorColumnHandle> columnHandles)
     {
-        return columnHandles.stream()
-                .filter(i -> isShardTimeColumnHandle(i))
-                .mapToLong(i -> i.getColumnId())
+        // returns ordinal or _shard_time column
+        return IntStream.range(0, columnHandles.size())
+                .filter(i -> isShardTimeColumnHandle(columnHandles.get(i)))
                 .findAny()
-                .getAsLong();
+                .getAsInt();
     }
 
     private static boolean isShardTimeColumnHandle(RaptorColumnHandle columnHandle)
