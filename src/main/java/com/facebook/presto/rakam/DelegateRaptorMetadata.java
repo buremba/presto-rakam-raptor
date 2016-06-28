@@ -83,15 +83,16 @@ public class DelegateRaptorMetadata
 
         boolean exists = false;
         for (ColumnMetadata column : tableMetadata.getColumns()) {
-            if(column.getName().equals(SHARD_TIME_COLUMN_NAME)) {
+            if (column.getName().equals(SHARD_TIME_COLUMN_NAME)) {
                 builder.add(SHARD_TIME_COLUMN);
                 exists = true;
-            } else {
+            }
+            else {
                 builder.add(column);
             }
         }
 
-        if(!exists) {
+        if (!exists) {
             try {
                 addColumn(session, tableHandle, SHARD_TIME_COLUMN);
             }
