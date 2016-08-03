@@ -17,7 +17,6 @@ package com.facebook.presto.rakam;
 import com.facebook.presto.raptor.RaptorPlugin;
 import com.facebook.presto.spi.NodeManager;
 import com.facebook.presto.spi.PageSorter;
-import com.facebook.presto.spi.block.BlockEncodingSerde;
 import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.collect.ImmutableList;
@@ -35,7 +34,6 @@ public class RakamRaptorPlugin
         extends RaptorPlugin
 {
     private TypeManager typeManager;
-    private BlockEncodingSerde serde;
 
     private NodeManager nodeManager;
     private PageSorter pageSorter;
@@ -49,7 +47,7 @@ public class RakamRaptorPlugin
     @Override
     public <T> List<T> getServices(Class<T> type)
     {
-        checkState(serde != null, "BlockEncodingSerde has not been set");
+        checkState(nodeManager != null, "NodeManager has not been set");
         checkState(typeManager != null, "TypeManager has not been set");
 
         if (type == ConnectorFactory.class) {
@@ -60,7 +58,6 @@ public class RakamRaptorPlugin
                     optionalConfig,
                     nodeManager,
                     pageSorter,
-                    serde,
                     typeManager)));
         }
         return ImmutableList.of();
@@ -71,13 +68,6 @@ public class RakamRaptorPlugin
     {
         super.setTypeManager(typeManager);
         this.typeManager = requireNonNull(typeManager, "typeManager is null");
-    }
-
-    @Inject
-    public void setBlockEncodingSerde(BlockEncodingSerde serde)
-    {
-        super.setBlockEncodingSerde(serde);
-        this.serde = requireNonNull(serde, "serde is null");
     }
 
     @Inject

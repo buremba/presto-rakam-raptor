@@ -59,9 +59,10 @@ public class S3BackupStore
     }
 
     @Override
-    public void deleteShard(UUID uuid)
+    public boolean deleteShard(UUID uuid)
     {
         s3Client.deleteObject(config.getS3Bucket(), uuid.toString());
+        return true;
     }
 
     @Override
