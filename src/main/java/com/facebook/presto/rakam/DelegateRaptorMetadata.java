@@ -35,6 +35,10 @@ import com.facebook.presto.spi.ConnectorOutputTableHandle;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.ConnectorTableHandle;
 import com.facebook.presto.spi.ConnectorTableMetadata;
+import com.facebook.presto.spi.ConnectorViewDefinition;
+import com.facebook.presto.spi.PrestoException;
+import com.facebook.presto.spi.SchemaTableName;
+import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.type.Type;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -51,6 +55,7 @@ import java.util.Optional;
 
 import static com.facebook.presto.raptor.util.DatabaseUtil.onDemandDao;
 import static com.facebook.presto.raptor.util.Types.checkType;
+import static com.facebook.presto.spi.StandardErrorCode.GENERIC_USER_ERROR;
 import static com.facebook.presto.spi.block.SortOrder.ASC_NULLS_FIRST;
 import static com.facebook.presto.spi.type.TimestampType.TIMESTAMP;
 import static java.util.Collections.nCopies;
@@ -206,6 +211,19 @@ public class DelegateRaptorMetadata
         }
 
         return super.getColumnMetadata(session, tableHandle, columnHandle);
+    }
+
+    @Override
+    public Map<SchemaTableName, ConnectorViewDefinition> getViews(ConnectorSession session, SchemaTablePrefix prefix)
+    {
+        // super.getViews requires unnecessary extra Mysql call
+        return ImmutableMap.of();
+    }
+
+    @Override
+    public void createView(ConnectorSession session, SchemaTableName viewName, String viewData, boolean replace)
+    {
+        throw new PrestoException(GENERIC_USER_ERROR, "Views are not implemented");
     }
 
     @Override
