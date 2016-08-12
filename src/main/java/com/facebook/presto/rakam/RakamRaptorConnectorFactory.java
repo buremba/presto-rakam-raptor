@@ -92,6 +92,7 @@ public class RakamRaptorConnectorFactory
         return new RaptorHandleResolver();
     }
 
+    @SuppressWarnings("Duplicates")
     @Override
     public Connector create(String connectorId, Map<String, String> config)
     {
@@ -116,8 +117,7 @@ public class RakamRaptorConnectorFactory
                         @Override
                         protected void setup(Binder binder)
                         {
-//                            binder.bind(ShardCompactionManager.class).to(DelegateShardCompactionManager.class).in(Scopes.SINGLETON);
-//                            binder.bind(ProxyShardCompactor.class).in(Scopes.SINGLETON);
+//                            binder.bind(DatabaseShardManager.class).in(Scopes.SINGLETON);
                         }
                     }),
                     Modules.override(new RaptorModule(connectorId)).with(new Module()
