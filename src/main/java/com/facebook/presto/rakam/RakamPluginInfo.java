@@ -19,4 +19,10 @@ public class RakamPluginInfo
     {
         return ImmutableMap.of("s3", new S3BackupStoreModule());
     }
+
+    @Override
+    public Module getMetadataModule()
+    {
+        return super.getMetadataModule();
+    }
 }

@@ -26,6 +26,7 @@ import com.facebook.presto.spi.type.Type;
 import io.airlift.json.JsonCodec;
 import io.airlift.units.DataSize;
 import org.skife.jdbi.v2.DBI;
+import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.util.TimestampMapper;
 
 import java.util.List;
@@ -45,7 +46,9 @@ public class DelegateRaptorPageSink
     public DelegateRaptorPageSink(DBI dbi, PageSorter pageSorter, StorageManager storageManager, JsonCodec<ShardInfo> shardInfoCodec, long transactionId, List<Long> columnIds, List<Type> columnTypes, List<Long> sortColumnIds, List<SortOrder> sortOrders, OptionalInt bucketCount, List<Long> bucketColumnIds, DataSize maxBufferSize, Optional<RaptorColumnHandle> temporalColumnHandle, int shardTimeColumnIndex)
     {
         super(pageSorter, storageManager, shardInfoCodec, transactionId, columnIds, columnTypes, sortColumnIds, sortOrders, bucketCount, bucketColumnIds, temporalColumnHandle, maxBufferSize);
-        epochMilli = dbi.open().createQuery("SELECT CURRENT_TIMESTAMP").map(TimestampMapper.FIRST).first().toInstant().toEpochMilli();
+        try (Handle handle = dbi.open()) {
+            epochMilli = handle.createQuery("SELECT CURRENT_TIMESTAMP").map(TimestampMapper.FIRST).first().toInstant().toEpochMilli();
+        }
         this.shardTimeColumnIndex = shardTimeColumnIndex;
         this.columnIdx = columnIds;
     }

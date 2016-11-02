@@ -35,7 +35,6 @@ import org.skife.jdbi.v2.tweak.ConnectionFactory;
 import javax.inject.Inject;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static com.facebook.presto.raptor.util.Types.checkType;
