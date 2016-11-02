@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.rakam;
 
+import com.facebook.presto.raptor.RaptorColumnHandle;
 import com.facebook.presto.raptor.RaptorPageSink;
 import com.facebook.presto.raptor.metadata.ShardInfo;
 import com.facebook.presto.raptor.storage.StorageManager;
@@ -41,16 +42,16 @@ public class DelegateRaptorPageSink
     private final int shardTimeColumnIndex;
     private final List<Long> columnIdx;
 
-    public DelegateRaptorPageSink(DBI dbi, PageSorter pageSorter, StorageManager storageManager, JsonCodec<ShardInfo> shardInfoCodec, long transactionId, List<Long> columnIds, List<Type> columnTypes, Optional<Long> sampleWeightColumnId, List<Long> sortColumnIds, List<SortOrder> sortOrders, OptionalInt bucketCount, List<Long> bucketColumnIds, DataSize maxBufferSize, int shardTimeColumnIndex)
+    public DelegateRaptorPageSink(DBI dbi, PageSorter pageSorter, StorageManager storageManager, JsonCodec<ShardInfo> shardInfoCodec, long transactionId, List<Long> columnIds, List<Type> columnTypes, List<Long> sortColumnIds, List<SortOrder> sortOrders, OptionalInt bucketCount, List<Long> bucketColumnIds, DataSize maxBufferSize, Optional<RaptorColumnHandle> temporalColumnHandle, int shardTimeColumnIndex)
     {
-        super(pageSorter, storageManager, shardInfoCodec, transactionId, columnIds, columnTypes, sampleWeightColumnId, sortColumnIds, sortOrders, bucketCount, bucketColumnIds, maxBufferSize);
+        super(pageSorter, storageManager, shardInfoCodec, transactionId, columnIds, columnTypes, sortColumnIds, sortOrders, bucketCount, bucketColumnIds, temporalColumnHandle, maxBufferSize);
         epochMilli = dbi.open().createQuery("SELECT CURRENT_TIMESTAMP").map(TimestampMapper.FIRST).first().toInstant().toEpochMilli();
         this.shardTimeColumnIndex = shardTimeColumnIndex;
         this.columnIdx = columnIds;
     }
 
     @Override
-    public CompletableFuture<?> appendPage(Page page, Block sampleWeightBlock)
+    public CompletableFuture<?> appendPage(Page page)
     {
         Block block = RunLengthEncodedBlock.create(TIMESTAMP, epochMilli, page.getPositionCount());
 
@@ -67,6 +68,6 @@ public class DelegateRaptorPageSink
 
         blocks[shardTimeColumnIndex] = block;
 
-        return super.appendPage(new Page(blocks), sampleWeightBlock);
+        return super.appendPage(new Page(blocks));
     }
 }

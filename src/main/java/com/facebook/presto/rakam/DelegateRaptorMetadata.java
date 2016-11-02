@@ -21,11 +21,13 @@ import com.facebook.presto.raptor.RaptorMetadataFactory;
 import com.facebook.presto.raptor.RaptorOutputTableHandle;
 import com.facebook.presto.raptor.RaptorTableHandle;
 import com.facebook.presto.raptor.metadata.ColumnInfo;
+import com.facebook.presto.raptor.metadata.ColumnMetadataRow;
 import com.facebook.presto.raptor.metadata.ForMetadata;
 import com.facebook.presto.raptor.metadata.MetadataDao;
 import com.facebook.presto.raptor.metadata.ShardDelta;
 import com.facebook.presto.raptor.metadata.ShardInfo;
 import com.facebook.presto.raptor.metadata.ShardManager;
+import com.facebook.presto.raptor.metadata.Table;
 import com.facebook.presto.raptor.metadata.TableColumn;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
@@ -109,9 +111,7 @@ public class DelegateRaptorMetadata
 
         return new ConnectorTableMetadata(tableMetadata.getTable(),
                 builder.build(),
-                tableMetadata.getProperties(),
-                tableMetadata.getOwner(),
-                tableMetadata.isSampled());
+                tableMetadata.getProperties());
     }
 
     @Override
@@ -133,7 +133,7 @@ public class DelegateRaptorMetadata
                 handle.getConnectorId(), handle.getTransactionId(),
                 handle.getSchemaName(), handle.getTableName(),
                 columnHandles, columnTypes,
-                handle.getSampleWeightColumnHandle(), handle.getSortColumnHandles(),
+                handle.getSortColumnHandles(),
                 handle.getSortOrders(), handle.getTemporalColumnHandle(),
                 handle.getDistributionId(), handle.getBucketCount(),
                 handle.getBucketColumnHandles());
@@ -160,26 +160,23 @@ public class DelegateRaptorMetadata
     public ConnectorInsertTableHandle beginInsert(ConnectorSession session, ConnectorTableHandle tableHandle)
     {
         RaptorInsertTableHandle handle = checkType(super.beginInsert(session, tableHandle), RaptorInsertTableHandle.class, "");
+        RaptorTableHandle table = checkType(tableHandle, RaptorTableHandle.class, "tableHandle");
 
         if (handle.getColumnHandles().stream().anyMatch(e -> e.getColumnName().equals(SHARD_TIME_COLUMN_NAME))) {
             return handle;
         }
 
         long columnId;
-        try {
-            columnId = addColumnInternal(tableHandle, SHARD_TIME_COLUMN);
-        }
-        catch (Exception e) {
-            Optional<TableColumn> tableColumn = dao.getTableColumns(handle.getTableId()).stream()
-                    .filter(col -> col.getColumnName().equals(SHARD_TIME_COLUMN_NAME))
-                    .findAny();
+        Optional<ColumnMetadataRow> tableColumn = dao.getColumnMetadataRows(table.getSchemaName(), table.getTableName())
+                .stream()
+                .filter(col -> col.getColumnName().equals(SHARD_TIME_COLUMN_NAME))
+                .findAny();
 
-            if (tableColumn.isPresent()) {
-                columnId = tableColumn.get().getColumnId();
-            }
-            else {
-                throw Throwables.propagate(e);
-            }
+        if (tableColumn.isPresent()) {
+            columnId = tableColumn.get().getColumnId();
+        }
+        else {
+            columnId = addColumnInternal(tableHandle, SHARD_TIME_COLUMN);
         }
 
         ImmutableList<RaptorColumnHandle> columnHandles = ImmutableList.<RaptorColumnHandle>builder()
@@ -199,7 +196,8 @@ public class DelegateRaptorMetadata
                 handle.getSortColumnHandles(),
                 nCopies(handle.getSortColumnHandles().size(), ASC_NULLS_FIRST),
                 handle.getBucketCount(),
-                handle.getBucketColumnHandles());
+                handle.getBucketColumnHandles(),
+                handle.getTemporalColumnHandle());
     }
 
     @Override

@@ -11,83 +11,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.facebook.presto.rakam;
 
+import com.facebook.presto.raptor.PluginInfo;
 import com.facebook.presto.raptor.RaptorPlugin;
-import com.facebook.presto.spi.NodeManager;
-import com.facebook.presto.spi.PageSorter;
+import com.facebook.presto.spi.Plugin;
 import com.facebook.presto.spi.connector.ConnectorFactory;
-import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-
-import javax.inject.Inject;
+import com.google.inject.Module;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static java.util.Objects.requireNonNull;
 
 public class RakamRaptorPlugin
         extends RaptorPlugin
 {
-    private TypeManager typeManager;
-
-    private NodeManager nodeManager;
-    private PageSorter pageSorter;
-    private ImmutableMap<String, String> optionalConfig;
+    private final String name;
+    private final Module metadataModule;
+    private final Map<String, Module> backupProviders;
 
     public RakamRaptorPlugin()
     {
-        super("rakam_raptor", new RakamMetadataModule(), ImmutableMap.of("s3", new S3BackupStoreModule()));
+        this(new RakamPluginInfo());
+    }
+
+    private RakamRaptorPlugin(PluginInfo info)
+    {
+        this(info.getName(), info.getMetadataModule(), info.getBackupProviders());
+    }
+
+    public RakamRaptorPlugin(String name, Module metadataModule, Map<String, Module> backupProviders)
+    {
+        checkArgument(!isNullOrEmpty(name), "name is null or empty");
+        this.name = name;
+        this.metadataModule = requireNonNull(metadataModule, "metadataModule is null");
+        this.backupProviders = ImmutableMap.copyOf(requireNonNull(backupProviders, "backupProviders is null"));
     }
 
     @Override
-    public <T> List<T> getServices(Class<T> type)
+    public Iterable<ConnectorFactory> getConnectorFactories()
     {
-        checkState(nodeManager != null, "NodeManager has not been set");
-        checkState(typeManager != null, "TypeManager has not been set");
-
-        if (type == ConnectorFactory.class) {
-            return ImmutableList.of(type.cast(new RakamRaptorConnectorFactory(
-                    "rakam_raptor",
-                    new RakamMetadataModule(),
-                    ImmutableMap.of("s3", new S3BackupStoreModule()),
-                    optionalConfig,
-                    nodeManager,
-                    pageSorter,
-                    typeManager)));
-        }
-        return ImmutableList.of();
+        return ImmutableList.of(new RakamRaptorConnectorFactory(name, metadataModule, backupProviders));
     }
 
-    @Inject
-    public void setTypeManager(TypeManager typeManager)
+    private static PluginInfo getPluginInfo()
     {
-        super.setTypeManager(typeManager);
-        this.typeManager = requireNonNull(typeManager, "typeManager is null");
-    }
-
-    @Inject
-    public void setNodeManager(NodeManager nodeManager)
-    {
-        this.nodeManager = nodeManager;
-        super.setNodeManager(nodeManager);
-    }
-
-    @Inject
-    public void setPageSorter(PageSorter pageSorter)
-    {
-        this.pageSorter = pageSorter;
-        super.setPageSorter(pageSorter);
-    }
-
-    @Override
-    public void setOptionalConfig(Map<String, String> optionalConfig)
-    {
-        this.optionalConfig = ImmutableMap.copyOf(requireNonNull(optionalConfig, "optionalConfig is null"));
-        super.setOptionalConfig(optionalConfig);
+        ClassLoader classLoader = RakamRaptorPlugin.class.getClassLoader();
+        ServiceLoader<PluginInfo> loader = ServiceLoader.load(PluginInfo.class, classLoader);
+        List<PluginInfo> list = ImmutableList.copyOf(loader);
+        return list.isEmpty() ? new PluginInfo() : getOnlyElement(list);
     }
 }

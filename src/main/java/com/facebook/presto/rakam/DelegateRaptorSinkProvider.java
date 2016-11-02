@@ -75,12 +75,12 @@ public class DelegateRaptorSinkProvider
                 handle.getTransactionId(),
                 toColumnIds(handle.getColumnHandles()),
                 handle.getColumnTypes(),
-                handle.getSampleWeightColumnHandle().map(RaptorColumnHandle::getColumnId),
                 toColumnIds(handle.getSortColumnHandles()),
                 handle.getSortOrders(),
                 handle.getBucketCount(),
                 toColumnIds(handle.getBucketColumnHandles()),
                 maxBufferSize,
+                handle.getTemporalColumnHandle(),
                 getShardTimeColumnIndex(handle.getColumnHandles()));
     }
 
@@ -96,12 +96,12 @@ public class DelegateRaptorSinkProvider
                 handle.getTransactionId(),
                 toColumnIds(handle.getColumnHandles()),
                 handle.getColumnTypes(),
-                Optional.empty(),
                 toColumnIds(handle.getSortColumnHandles()),
                 handle.getSortOrders(),
                 handle.getBucketCount(),
                 toColumnIds(handle.getBucketColumnHandles()),
                 maxBufferSize,
+                handle.getTemporalColumnHandle(),
                 getShardTimeColumnIndex(handle.getColumnHandles()));
     }
 
