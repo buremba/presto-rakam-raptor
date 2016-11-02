@@ -99,7 +99,7 @@ public class RakamRaptorConnectorFactory
                         public void configure(Binder binder)
                         {
                             binder.bind(RaptorPageSinkProvider.class).to(DelegateRaptorSinkProvider.class).in(Scopes.SINGLETON);
-                            binder.bind(RaptorMetadataFactory.class).to(DelegateRaptorMetadata.DelegateRaptorMetadataFactory.class).in(Scopes.SINGLETON);
+//                            binder.bind(RaptorMetadataFactory.class).to(DelegateRaptorMetadata.DelegateRaptorMetadataFactory.class).in(Scopes.SINGLETON);
                         }
                     }));
 
