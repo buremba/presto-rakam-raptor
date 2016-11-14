@@ -60,12 +60,4 @@ public class RakamRaptorPlugin
     {
         return ImmutableList.of(new RakamRaptorConnectorFactory(name, metadataModule, backupProviders));
     }
-
-    private static PluginInfo getPluginInfo()
-    {
-        ClassLoader classLoader = RakamRaptorPlugin.class.getClassLoader();
-        ServiceLoader<PluginInfo> loader = ServiceLoader.load(PluginInfo.class, classLoader);
-        List<PluginInfo> list = ImmutableList.copyOf(loader);
-        return list.isEmpty() ? new PluginInfo() : getOnlyElement(list);
-    }
 }

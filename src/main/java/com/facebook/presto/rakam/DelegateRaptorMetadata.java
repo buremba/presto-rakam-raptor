@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.rakam;
 
+import com.facebook.presto.raptor.IRaptorMetadata;
 import com.facebook.presto.raptor.RaptorColumnHandle;
 import com.facebook.presto.raptor.RaptorConnectorId;
 import com.facebook.presto.raptor.RaptorInsertTableHandle;
@@ -27,7 +28,6 @@ import com.facebook.presto.raptor.metadata.MetadataDao;
 import com.facebook.presto.raptor.metadata.ShardDelta;
 import com.facebook.presto.raptor.metadata.ShardInfo;
 import com.facebook.presto.raptor.metadata.ShardManager;
-import com.facebook.presto.raptor.metadata.Table;
 import com.facebook.presto.raptor.metadata.TableColumn;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
@@ -42,7 +42,6 @@ import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.type.Type;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
@@ -64,7 +63,7 @@ import static java.util.Collections.nCopies;
 import static java.util.Objects.requireNonNull;
 
 public class DelegateRaptorMetadata
-        extends RaptorMetadata
+        extends IRaptorMetadata
 {
     public static final String SHARD_TIME_COLUMN_NAME = "_shard_time";
     public static final ColumnMetadata SHARD_TIME_COLUMN = new ColumnMetadata(SHARD_TIME_COLUMN_NAME, TIMESTAMP, null, true);

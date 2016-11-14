@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.rakam;
 
+import com.facebook.presto.raptor.IRaptorPageSink;
 import com.facebook.presto.raptor.RaptorColumnHandle;
 import com.facebook.presto.raptor.RaptorPageSink;
 import com.facebook.presto.raptor.metadata.ShardInfo;
@@ -29,15 +30,17 @@ import org.skife.jdbi.v2.DBI;
 import org.skife.jdbi.v2.Handle;
 import org.skife.jdbi.v2.util.TimestampMapper;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 
+import static com.facebook.presto.raptor.IRaptorBucketFunction.getHashFunction;
 import static com.facebook.presto.spi.type.TimestampType.TIMESTAMP;
 
 public class DelegateRaptorPageSink
-        extends RaptorPageSink
+        extends IRaptorPageSink
 {
     private final long epochMilli;
     private final int shardTimeColumnIndex;
@@ -51,6 +54,9 @@ public class DelegateRaptorPageSink
         }
         this.shardTimeColumnIndex = shardTimeColumnIndex;
         this.columnIdx = columnIds;
+
+        int[] bucketFields = bucketColumnIds.stream().mapToInt(columnIds::indexOf).toArray();
+        Arrays.stream(bucketFields).forEach(field -> getHashFunction(columnTypes.get(field)));
     }
 
     @Override
