@@ -13,16 +13,9 @@
  */
 package com.facebook.presto.rakam;
 
-import com.facebook.presto.raptor.IRaptorHandleResolver;
-import com.facebook.presto.raptor.IRaptorNodePartitioningProvider;
-import com.facebook.presto.raptor.IRaptorSplitManager;
 import com.facebook.presto.raptor.RaptorConnector;
 import com.facebook.presto.raptor.RaptorHandleResolver;
-import com.facebook.presto.raptor.RaptorMetadataFactory;
 import com.facebook.presto.raptor.RaptorModule;
-import com.facebook.presto.raptor.RaptorNodePartitioningProvider;
-import com.facebook.presto.raptor.RaptorPageSinkProvider;
-import com.facebook.presto.raptor.RaptorSplitManager;
 import com.facebook.presto.raptor.backup.BackupModule;
 import com.facebook.presto.raptor.storage.StorageModule;
 import com.facebook.presto.raptor.util.RebindSafeMBeanServer;
@@ -35,11 +28,8 @@ import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
-import com.google.inject.util.Modules;
 import io.airlift.bootstrap.Bootstrap;
 import io.airlift.json.JsonModule;
 import org.weakref.jmx.guice.MBeanModule;
@@ -77,10 +67,9 @@ public class RakamRaptorConnectorFactory
     @Override
     public ConnectorHandleResolver getHandleResolver()
     {
-        return new IRaptorHandleResolver();
+        return new RaptorHandleResolver();
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
     public Connector create(String connectorId, Map<String, String> config, ConnectorContext context)
     {
@@ -99,18 +88,7 @@ public class RakamRaptorConnectorFactory
                     metadataModule,
                     new BackupModule(backupProviders),
                     new StorageModule(connectorId),
-                    Modules.override(new RaptorModule(connectorId)).with(new Module()
-                    {
-                        @Override
-                        public void configure(Binder binder)
-                        {
-                            binder.bind(RaptorNodePartitioningProvider.class).to(IRaptorNodePartitioningProvider.class).in(Scopes.SINGLETON);
-                            binder.bind(RaptorPageSinkProvider.class).to(DelegateRaptorSinkProvider.class).in(Scopes.SINGLETON);
-                            binder.bind(RaptorHandleResolver.class).to(IRaptorHandleResolver.class).in(Scopes.SINGLETON);
-                            binder.bind(RaptorMetadataFactory.class).to(DelegateRaptorMetadata.DelegateRaptorMetadataFactory.class).in(Scopes.SINGLETON);
-                            binder.bind(RaptorSplitManager.class).to(IRaptorSplitManager.class).in(Scopes.SINGLETON);
-                        }
-                    }));
+                    new RaptorModule(connectorId));
 
             Injector injector = app
                     .strictConfig()
