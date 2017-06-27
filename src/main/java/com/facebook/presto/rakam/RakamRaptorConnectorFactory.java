@@ -17,6 +17,8 @@ import com.facebook.presto.raptor.RaptorConnector;
 import com.facebook.presto.raptor.RaptorHandleResolver;
 import com.facebook.presto.raptor.RaptorModule;
 import com.facebook.presto.raptor.backup.BackupModule;
+import com.facebook.presto.raptor.storage.CachingOrcStorageManager;
+import com.facebook.presto.raptor.storage.StorageManager;
 import com.facebook.presto.raptor.storage.StorageModule;
 import com.facebook.presto.raptor.util.RebindSafeMBeanServer;
 import com.facebook.presto.spi.ConnectorHandleResolver;
@@ -28,8 +30,11 @@ import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+import com.google.inject.util.Modules;
 import io.airlift.bootstrap.Bootstrap;
 import io.airlift.json.JsonModule;
 import org.weakref.jmx.guice.MBeanModule;
@@ -87,7 +92,14 @@ public class RakamRaptorConnectorFactory
                     },
                     metadataModule,
                     new BackupModule(backupProviders),
-                    new StorageModule(connectorId),
+                    Modules.override(new StorageModule(connectorId)).with(new Module()
+                    {
+                        @Override
+                        public void configure(Binder binder)
+                        {
+                            binder.bind(StorageManager.class).to(CachingOrcStorageManager.class).in(Scopes.SINGLETON);
+                        }
+                    }),
                     new RaptorModule(connectorId));
 
             Injector injector = app
