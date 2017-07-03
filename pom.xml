@@ -11,7 +11,7 @@
     <artifactId>presto-rakam-raptor</artifactId>
     <description>Presto - Raptor Connector for Rakam</description>
     <packaging>presto-plugin</packaging>
-    <version>0.180.4-SNAPSHOT</version>
+    <version>0.180.0-SNAPSHOT</version>
 
     <properties>
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
