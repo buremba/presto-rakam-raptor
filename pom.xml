@@ -5,13 +5,13 @@
     <parent>
         <groupId>com.facebook.presto</groupId>
         <artifactId>presto-root</artifactId>
-        <version>0.173</version>
+        <version>0.180</version>
     </parent>
 
     <artifactId>presto-rakam-raptor</artifactId>
     <description>Presto - Raptor Connector for Rakam</description>
     <packaging>presto-plugin</packaging>
-    <version>0.173.2-SNAPSHOT</version>
+    <version>0.180.1-SNAPSHOT</version>
 
     <properties>
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
