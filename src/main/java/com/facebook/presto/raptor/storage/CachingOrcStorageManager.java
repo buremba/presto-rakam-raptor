@@ -14,6 +14,7 @@
 package com.facebook.presto.raptor.storage;
 
 import com.facebook.presto.orc.OrcDataSource;
+import com.facebook.presto.rakam.cache.OrcDataSourceFactory;
 import com.facebook.presto.raptor.RaptorConnectorId;
 import com.facebook.presto.raptor.backup.BackupManager;
 import com.facebook.presto.raptor.backup.BackupStore;
@@ -48,14 +49,16 @@ public class CachingOrcStorageManager
     private final Optional<BackupStore> backupStore;
     private final ShardRecoveryManager recoveryManager;
     private final Duration recoveryTimeout;
+    private final OrcDataSourceFactory orcDataSourceFactory;
 
     @Inject
-    public CachingOrcStorageManager(NodeManager nodeManager, StorageService storageService, Optional<BackupStore> backupStore, ReaderAttributes readerAttributes, StorageManagerConfig config, RaptorConnectorId connectorId, BackupManager backgroundBackupManager, ShardRecoveryManager recoveryManager, ShardRecorder shardRecorder, TypeManager typeManager)
+    public CachingOrcStorageManager(OrcDataSourceFactory orcDataSourceFactory, NodeManager nodeManager, StorageService storageService, Optional<BackupStore> backupStore, ReaderAttributes readerAttributes, StorageManagerConfig config, RaptorConnectorId connectorId, BackupManager backgroundBackupManager, ShardRecoveryManager recoveryManager, ShardRecorder shardRecorder, TypeManager typeManager)
     {
         super(nodeManager, storageService, backupStore, readerAttributes, config, connectorId, backgroundBackupManager, recoveryManager, shardRecorder, typeManager);
         this.storageService = storageService;
         this.backupStore = backupStore;
         this.recoveryManager = recoveryManager;
+        this.orcDataSourceFactory = orcDataSourceFactory;
         this.recoveryTimeout = config.getShardRecoveryTimeout();
     }
 
@@ -83,16 +86,10 @@ public class CachingOrcStorageManager
         }
 
         try {
-            return memoryMappedOrcDataSource(readerAttributes, file);
+            return orcDataSourceFactory.create(readerAttributes, file);
         }
         catch (IOException e) {
             throw new PrestoException(RAPTOR_ERROR, "Failed to open shard file: " + file, e);
         }
-    }
-
-    private static OrcDataSource memoryMappedOrcDataSource(ReaderAttributes readerAttributes, File file)
-            throws FileNotFoundException
-    {
-        return new MemoryMappedOrcDataSource(file, readerAttributes.getMaxMergeDistance(), readerAttributes.getMaxReadSize(), readerAttributes.getStreamBufferSize());
     }
 }

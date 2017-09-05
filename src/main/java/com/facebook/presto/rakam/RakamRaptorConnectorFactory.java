@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.rakam;
 
+import com.facebook.presto.rakam.cache.CacheModule;
 import com.facebook.presto.raptor.RaptorConnector;
 import com.facebook.presto.raptor.RaptorHandleResolver;
 import com.facebook.presto.raptor.RaptorModule;
@@ -92,14 +93,14 @@ public class RakamRaptorConnectorFactory
                     },
                     metadataModule,
                     new BackupModule(backupProviders),
-                    Modules.override(new StorageModule(connectorId)).with(new Module()
-                    {
+                    Modules.override(new StorageModule(connectorId)).with(new Module() {
                         @Override
                         public void configure(Binder binder)
                         {
                             binder.bind(StorageManager.class).to(CachingOrcStorageManager.class).in(Scopes.SINGLETON);
                         }
                     }),
+                    new CacheModule(),
                     new RaptorModule(connectorId));
 
             Injector injector = app
