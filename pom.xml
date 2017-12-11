@@ -11,7 +11,7 @@
     <artifactId>presto-rakam-raptor</artifactId>
     <description>Presto - Raptor Connector for Rakam</description>
     <packaging>presto-plugin</packaging>
-    <version>0.190.1-SNAPSHOT</version>
+    <version>0.190.1</version>
 
     <properties>
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
@@ -211,7 +211,7 @@
         <connection>scm:git:https://github.com/buremba/presto-rakam-raptor.git</connection>
         <developerConnection>scm:git:git@github.com:buremba/presto-rakam-raptor.git</developerConnection>
         <url>https://github.com/buremba/presto-rakam-raptor</url>
-        <tag>HEAD</tag>
+        <tag>0.190.1</tag>
     </scm>
 
     <distributionManagement>
