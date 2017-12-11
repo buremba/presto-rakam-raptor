@@ -5,13 +5,13 @@
     <parent>
         <groupId>com.facebook.presto</groupId>
         <artifactId>presto-root</artifactId>
-        <version>0.180</version>
+        <version>0.190</version>
     </parent>
 
     <artifactId>presto-rakam-raptor</artifactId>
     <description>Presto - Raptor Connector for Rakam</description>
     <packaging>presto-plugin</packaging>
-    <version>0.180.3-SNAPSHOT</version>
+    <version>0.190.1-SNAPSHOT</version>
 
     <properties>
         <air.main.basedir>${project.parent.basedir}</air.main.basedir>
@@ -65,6 +65,12 @@
         <dependency>
             <groupId>com.facebook.presto</groupId>
             <artifactId>presto-client</artifactId>
+            <version>${project.parent.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.facebook.presto</groupId>
+            <artifactId>presto-matching</artifactId>
             <version>${project.parent.version}</version>
             <scope>runtime</scope>
         </dependency>

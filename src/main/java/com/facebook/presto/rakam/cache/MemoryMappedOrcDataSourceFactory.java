@@ -91,7 +91,7 @@ public class MemoryMappedOrcDataSourceFactory
         public MemoryMappedOrcDataSource(File path, DataSize maxMergeDistance, DataSize maxReadSize, DataSize streamBufferSize)
                 throws FileNotFoundException
         {
-            super(new OrcDataSourceId(path.getPath()), path.length(), maxMergeDistance, maxReadSize, streamBufferSize);
+            super(new OrcDataSourceId(path.getPath()), path.length(), maxMergeDistance, maxReadSize, streamBufferSize, true);
             this.file = path;
         }
 
