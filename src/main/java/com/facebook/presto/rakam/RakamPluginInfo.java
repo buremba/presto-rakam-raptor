@@ -67,7 +67,7 @@ public class RakamPluginInfo
     @Override
     public Module getMetadataModule()
     {
-        return new DatabaseMetadataModule();
+        return super.getMetadataModule();
     }
 
     public class DatabaseMetadataModule
